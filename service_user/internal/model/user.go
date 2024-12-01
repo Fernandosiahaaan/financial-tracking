@@ -16,3 +16,8 @@ type User struct {
 	UpdatedAt time.Time  `json:"updated_at"`
 	DeletedAt *time.Time `json:"deleted_at"`
 }
+
+type LoginData struct {
+	Id    string `json:"user_id"`
+	Token string `json:"token"`
+}

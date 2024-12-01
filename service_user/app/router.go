@@ -14,7 +14,7 @@ func routing(handler *handler.UserHandler) (*gin.Engine, error) {
 	rout.GET("/ping", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "pong"})
 	})
-	rout.GET("/login", handler.UserLogin)
+	rout.POST("/login", handler.UserLogin)
 	rout.POST("/user", handler.UserCreate)
 
 	// with midleware

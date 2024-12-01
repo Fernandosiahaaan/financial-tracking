@@ -7,7 +7,7 @@ import (
 	"os"
 	"service-user/internal/model"
 
-	"github.com/lib/pq"
+	_ "github.com/lib/pq"
 )
 
 type UserStore struct {
@@ -17,8 +17,6 @@ type UserStore struct {
 }
 
 func NewUserStore(ctx context.Context) (*UserStore, error) {
-	sql.Register("postgres", &pq.Driver{})
-
 	db, err := sql.Open("postgres", os.Getenv("POSTGRES_URI"))
 	if err != nil {
 		return nil, fmt.Errorf("could not connect to the database. err : %v", err)
@@ -39,7 +37,7 @@ func (r *UserStore) CreateNewUser(user model.User) (string, error) {
 	VALUES ($1, $2, $3, $4, $5, $6, $7, NULL)
 	RETURNING id 
 	`
-	err := r.db.QueryRowContext(r.ctx, query, user.Id, user.Username, user.Password, user.Email, user.Role, user.CreatedAt, user.UpdatedAt, user.DeletedAt).Scan(&id)
+	err := r.db.QueryRowContext(r.ctx, query, user.Id, user.Username, user.Password, user.Email, user.Role, user.CreatedAt, user.UpdatedAt).Scan(&id)
 	return id, err
 }
 
@@ -48,7 +46,7 @@ func (r *UserStore) UpdateUser(user model.User) (string, error) {
 	query := `
         UPDATE users 
         SET username = $1, password = $2, email = $3, role = $4, updated_at = $5
-        WHERE id = $6 and deleted_at = NULL
+        WHERE id = $6 and deleted_at is NULL
         RETURNING id
     `
 	err := r.db.QueryRowContext(r.ctx, query, user.Username, user.Password, user.Email, user.Role, user.UpdatedAt, user.Id).Scan(&id)
@@ -59,14 +57,14 @@ func (r *UserStore) UpdateUser(user model.User) (string, error) {
 	return id, nil
 }
 
-func (r *UserStore) GetUser(user model.User) (model.User, error) {
+func (r *UserStore) GetUserByName(username string) (model.User, error) {
 	query := `
 	SELECT id, username, password, email, role, created_at, updated_at 
 	FROM users 
-	WHERE username=$1 and deleted_at=NULL
+	WHERE username=$1 and deleted_at is NULL
 	`
 	var existUser model.User
-	err := r.db.QueryRowContext(r.ctx, query, user.Username).Scan(
+	err := r.db.QueryRowContext(r.ctx, query, username).Scan(
 		&existUser.Id,
 		&existUser.Username,
 		&existUser.Password,
@@ -107,7 +105,7 @@ func (r *UserStore) GetAllUsers() ([]model.User, error) {
 	query := `
 	SELECT id, username, password, email, role, created_at, updated_at
 	FROM users
-	WHERE deleted_at=NULL
+	WHERE deleted_at is NULL
 	`
 	rows, err := r.db.QueryContext(r.ctx, query)
 	if err != nil {

@@ -24,11 +24,6 @@ func main() {
 		log.Fatalf("Error loading .env file")
 	}
 
-	// Gin Handler
-	portHttp := os.Getenv("PORT_HTTP")
-	localHost := fmt.Sprintf("0.0.0.0:%s", portHttp)
-	fmt.Printf("🌐 %s\n", localHost)
-
 	userStore, err := store.NewUserStore(ctx)
 	if err != nil {
 		log.Fatal(err)
@@ -60,11 +55,16 @@ func main() {
 	defer userHandler.Close()
 	fmt.Println("🔥 Init Handler...")
 
+	// Routing
 	rout, err := routing(userHandler)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	// HTTP Start
+	portHttp := os.Getenv("PORT_HTTP")
+	localHost := fmt.Sprintf("0.0.0.0:%s", portHttp)
+	fmt.Printf("🌐 %s\n", localHost)
 	err = rout.Run(localHost)
 	if err != nil {
 		log.Fatalf("Could not listen and serve %s. err = %v", localHost, err)
