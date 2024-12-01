@@ -32,11 +32,42 @@ services:
       - "5601:5601"
     networks:
       - defaults
+  
+  postgres:
+    image: postgres
+    container_name: postgres
+    platform: linux/amd64
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: financial-tracking
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - defaults
 
+  mysql:
+    image: mysql:5.7
+    container_name: mysql
+    platform: linux/amd64
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: mydatabase
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    networks:
+      - defaults
+  
 networks:
   defaults:
     driver: bridge
 
 volumes:
   esdata:
-    driver: local  # Gunakan driver volume lokal untuk data Elasticsearch
+    # driver: local  # Gunakan driver volume lokal untuk data Elasticsearch
+  postgres_data:
+    # driver: local

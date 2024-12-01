@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS categories (
+    id SERIAL PRIMARY KEY NOT NULL,
+    name VARCHAR(50) NOT NULL,
+    description TEXT,
+    transaction_type TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP DEFAULT NULL
+);
+
