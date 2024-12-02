@@ -94,6 +94,22 @@ func (h *UserHandler) UserLogin(c *gin.Context) {
 
 func (h *UserHandler) UserGetByID(c *gin.Context) {
 	// token, flag := c.Get("jwtToken")
+	userID := c.Param("id")
+	if userID == "" {
+		model.CreateResponseHttp(c, http.StatusBadRequest, model.ResponseHttp{Error: true, Message: "Invalid User ID uri"})
+		return
+	}
+
+	user, err := h.service.GetUserById(userID)
+	if err != nil {
+		model.CreateResponseHttp(c, http.StatusInternalServerError, model.ResponseHttp{Error: true, Message: fmt.Sprintf("Invalid username and password. err := %v", err)})
+		return
+	} else if user == nil {
+		model.CreateResponseHttp(c, http.StatusInternalServerError, model.ResponseHttp{Error: true, Message: "username not found"})
+		return
+	}
+
+	model.CreateResponseHttp(c, http.StatusOK, model.ResponseHttp{Error: false, Message: "success get info me", Data: user})
 }
 
 func (h *UserHandler) UserLogout(c *gin.Context)     {}

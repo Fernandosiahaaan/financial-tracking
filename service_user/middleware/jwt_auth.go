@@ -62,12 +62,14 @@ func (m *Midleware) AuthMiddleware() gin.HandlerFunc {
 		authToken := c.GetHeader("Authorization")
 		if authToken == "" {
 			model.CreateResponseHttp(c, http.StatusUnauthorized, model.ResponseHttp{Error: true, Message: "Authentication header null"})
+			c.Abort()
 			return
 		}
 
 		bearerToken := strings.Split(authToken, " ")
 		if len(bearerToken) != 2 {
 			model.CreateResponseHttp(c, http.StatusUnauthorized, model.ResponseHttp{Error: true, Message: "Invalid format token"})
+			c.Abort()
 			return
 		}
 
@@ -75,12 +77,14 @@ func (m *Midleware) AuthMiddleware() gin.HandlerFunc {
 		token, err := m.VerifyToken(jwtToken)
 		if err != nil {
 			model.CreateResponseHttp(c, http.StatusUnauthorized, model.ResponseHttp{Error: true, Message: fmt.Sprintf("Failed token. err = %s", err)})
+			c.Abort()
 			return
 		}
 
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok {
 			model.CreateResponseHttp(c, http.StatusUnauthorized, model.ResponseHttp{Error: true, Message: "Fail claims token"})
+			c.Abort()
 			return
 		}
 
