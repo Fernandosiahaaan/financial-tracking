@@ -37,7 +37,7 @@ func (r *UserStore) CreateNewUser(user model.User) (string, error) {
 	VALUES ($1, $2, $3, $4, $5, $6, $7, NULL)
 	RETURNING id 
 	`
-	err := r.db.QueryRowContext(r.ctx, query, user.Id, user.Username, user.Password, user.Email, user.Role, user.CreatedAt, user.UpdatedAt).Scan(&id)
+	err := r.db.QueryRowContext(r.ctx, query, user.ID, user.Username, user.Password, user.Email, user.Role, user.CreatedAt, user.UpdatedAt).Scan(&id)
 	return id, err
 }
 
@@ -49,7 +49,7 @@ func (r *UserStore) UpdateUser(user model.User) (string, error) {
         WHERE id = $6 and deleted_at is NULL
         RETURNING id
     `
-	err := r.db.QueryRowContext(r.ctx, query, user.Username, user.Password, user.Email, user.Role, user.UpdatedAt, user.Id).Scan(&id)
+	err := r.db.QueryRowContext(r.ctx, query, user.Username, user.Password, user.Email, user.Role, user.UpdatedAt, user.ID).Scan(&id)
 
 	if err != nil {
 		return "", err
@@ -65,7 +65,7 @@ func (r *UserStore) GetUserByName(username string) (model.User, error) {
 	`
 	var existUser model.User
 	err := r.db.QueryRowContext(r.ctx, query, username).Scan(
-		&existUser.Id,
+		&existUser.ID,
 		&existUser.Username,
 		&existUser.Password,
 		&existUser.Email,
@@ -83,11 +83,11 @@ func (r *UserStore) GetUserById(userId string) (*model.User, error) {
 	query := `
 	SELECT id, username, password, email, role, created_at, updated_at
 	FROM users 
-	WHERE id=$1 and deleted_at=NULL
+	WHERE id=$1 and deleted_at is NULL
 	`
 	var existUser *model.User = &model.User{}
 	err := r.db.QueryRowContext(r.ctx, query, userId).Scan(
-		&existUser.Id,
+		&existUser.ID,
 		&existUser.Username,
 		&existUser.Password,
 		&existUser.Email,
@@ -95,6 +95,9 @@ func (r *UserStore) GetUserById(userId string) (*model.User, error) {
 		&existUser.CreatedAt,
 		&existUser.UpdatedAt,
 	)
+	fmt.Println("userId = ", userId)
+	fmt.Println("exist user = ", existUser)
+	fmt.Println("err = ", err)
 	if err != nil {
 		return existUser, err
 	}
@@ -117,7 +120,7 @@ func (r *UserStore) GetAllUsers() ([]model.User, error) {
 	for rows.Next() {
 		var user model.User
 		err := rows.Scan(
-			&user.Id,
+			&user.ID,
 			&user.Username,
 			&user.Password,
 			&user.Email,

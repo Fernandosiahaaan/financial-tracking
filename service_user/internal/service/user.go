@@ -14,6 +14,8 @@ import (
 	"github.com/google/uuid"
 )
 
+var flagCacthAllUsers bool = false
+
 type UserService struct {
 	repo   *store.UserStore
 	ctx    context.Context
@@ -42,14 +44,16 @@ func (s *UserService) CreateNewUser(user model.User) (userID string, err error) 
 	existUser, err := s.repo.GetUserByName(user.Username)
 	if err != nil && !errors.Is(sql.ErrNoRows, err) {
 		return "", err
+	} else if existUser.Username == user.Username {
+		return "", errors.New("user already created")
 	}
 
-	if existUser.Username == user.Username {
-		return "", errors.New("user already created")
+	if user.Role == "" {
+		user.Role = "user"
 	}
 	user.CreatedAt = time.Now()
 	user.UpdatedAt = time.Now()
-	user.Id = uuid.New().String()
+	user.ID = uuid.New().String()
 
 	userID, err = s.repo.CreateNewUser(user)
 	if err != nil {
@@ -61,6 +65,33 @@ func (s *UserService) CreateNewUser(user model.User) (userID string, err error) 
 	}
 
 	return userID, err
+}
+
+func (s *UserService) GetAllUsers() ([]model.User, error) {
+	var usersInfo []model.User = []model.User{}
+	var err error
+
+	if flagCacthAllUsers {
+		usersInfo, err = s.redis.GetAllUserInfo()
+		if (err == nil) && (usersInfo != nil) {
+			return usersInfo, nil
+		}
+	}
+
+	usersInfo, err = s.repo.GetAllUsers()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, user := range usersInfo {
+		if err = s.redis.SaveUserInfo(user); err != nil {
+			fmt.Printf("failed set to redis data education with name %s\n", user.Username)
+			flagCacthAllUsers = false
+		}
+	}
+	flagCacthAllUsers = true
+
+	return usersInfo, nil
 }
 
 func (s *UserService) GetUserByName(user model.User) (model.User, error) {
@@ -95,6 +126,30 @@ func (s *UserService) GetUserById(userId string) (*model.User, error) {
 		return nil, nil
 	}
 	return existUser, nil
+}
+
+func (s *UserService) UpdateUser(user model.User) (model.User, error) {
+	user.Password = strings.TrimSpace(user.Password)
+	hashPassword, err := s.HashPassword(user.Password)
+	if err != nil {
+		return model.User{}, fmt.Errorf("failed hash password. err = %s", err.Error())
+	}
+	user.Password = hashPassword
+	user.UpdatedAt = time.Now()
+	if user.Role == "" {
+		user.Role = "user"
+	}
+
+	id, err := s.repo.UpdateUser(user)
+	if err != nil {
+		return model.User{}, fmt.Errorf("failed update user %s to db. err = %s", user.Username, err.Error())
+	}
+	user.ID = id
+
+	if err = s.redis.SaveUserInfo(user); err != nil {
+		return model.User{}, fmt.Errorf("failed update user %s to redis. err = %s", user.Username, err.Error()) // Kembalikan model.User kosong jika ada error
+	}
+	return user, nil
 }
 
 func (s *UserService) Close() {

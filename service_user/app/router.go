@@ -14,15 +14,15 @@ func routing(handler *handler.UserHandler) (*gin.Engine, error) {
 	rout.GET("/ping", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "pong"})
 	})
-	rout.POST("/login", handler.UserLogin)
 	rout.POST("/user", handler.UserCreate)
+	rout.POST("/login", handler.UserLogin)
 
 	// with midleware
 	auth := rout.Group("/", handler.Middleware.AuthMiddleware())
 	auth.POST("user/logout", handler.UserLogout)
 	auth.GET("user", handler.UserGetAll)
 	auth.GET("user/:id", handler.UserGetByID)
-	auth.POST("user/:id", handler.UserUpdateByID)
+	auth.PUT("user/:id", handler.UserUpdateByID)
 
 	return rout, nil
 }

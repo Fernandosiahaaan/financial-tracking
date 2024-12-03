@@ -7,7 +7,7 @@ var (
 )
 
 type User struct {
-	Id        string     `json:"id"`
+	ID        string     `json:"id"`
 	Username  string     `json:"username"`
 	Password  string     `json:"password"`
 	Email     string     `json:"email"`
@@ -20,4 +20,10 @@ type User struct {
 type LoginData struct {
 	Id    string `json:"user_id"`
 	Token string `json:"token"`
+}
+
+type LoginCacheData struct {
+	Id       string `json:"id"`
+	Username string `json:"username"`
+	Role     string `json:"role"`
 }
