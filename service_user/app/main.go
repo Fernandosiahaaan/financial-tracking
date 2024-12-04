@@ -9,7 +9,7 @@ import (
 	"service-user/internal/handler"
 	"service-user/internal/service"
 	"service-user/internal/store"
-	"service-user/middleware"
+	"service-user/middlewares"
 
 	"github.com/joho/godotenv"
 )
@@ -42,7 +42,7 @@ func main() {
 	defer userService.Close()
 	fmt.Println("🔥 Init Service...")
 
-	mw := middleware.NewMidleware(ctx)
+	mw := middlewares.NewMidleware(ctx)
 	defer mw.Close()
 	fmt.Println("🔥 Init midleware...")
 

@@ -9,14 +9,14 @@ import (
 	"service-user/internal/model"
 	"service-user/internal/service"
 	"service-user/internal/store"
-	"service-user/middleware"
+	"service-user/middlewares"
 
 	"github.com/gin-gonic/gin"
 )
 
 type ParamHandler struct {
 	Ctx        context.Context
-	Middleware *middleware.Midleware
+	Middleware *middlewares.Midleware
 	Service    *service.UserService
 	Redis      *redis.RedisCln
 	Store      *store.UserStore
@@ -25,7 +25,7 @@ type ParamHandler struct {
 type UserHandler struct {
 	ctx        context.Context
 	cancel     context.CancelFunc
-	Middleware *middleware.Midleware
+	Middleware *middlewares.Midleware
 	service    *service.UserService
 	redis      *redis.RedisCln
 	store      *store.UserStore
