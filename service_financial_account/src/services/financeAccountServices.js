@@ -58,15 +58,11 @@ async function GetFinanceAccounts() {
 
 async function GetFinanceAccountByID(id) {
     try {
-        const account = await FinanceAccount.findByPk(id, {
-            where: {
-                deleted_at : null,
-            }
-        });
+        const account = await FinanceAccount.findByPk(id);
         return {
-            error: (!account) ? true : false,
-            message: (!account) ? `failed get finance account with id ${account.id}` : `success get finance account with id ${account.id}`,
-            data: (!account) ? null : account,
+            error: (!account || account.deleted_at != null) ? true : false,
+            message: (!account || account.deleted_at != null) ? `failed get finance account with id ${account.id}` : `success get finance account with id ${account.id}`,
+            data: (!account || account.deleted_at != null) ? null : account,
         };
     } catch (error) {
         return {
