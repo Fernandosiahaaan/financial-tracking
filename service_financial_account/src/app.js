@@ -1,9 +1,10 @@
 // Import modul Express
 const express = require('express');
-const accountControllers = require('./controllers/accountControllers');
+const accountControllers = require('./controllers/financeAccountControllers');
 const config = require('./config/config');
 const logger = require('./config/logger'); 
 const router = require('./routes/accountRoutes');
+const { error } = require('winston');
 
 async function run() {
   const app = express();
@@ -15,7 +16,9 @@ async function run() {
     isFile: false, 
   });
 
+  app.use(express.json());
   app.use('', router);
+  app.use((req,res) => { res.status(404).json({error: true, message: 'route not found'}) });
   app.listen(cfg.port, () => {
     logger.info(`🌐 http://localhost:${cfg.port}`);
   });

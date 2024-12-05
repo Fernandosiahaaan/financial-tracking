@@ -1,5 +1,5 @@
 const { Pool } = require('pg');
-const logger = require('../../config/logger');  // Pastikan logger sudah diinisialisasi dengan benar
+const logger = require('../../config/logger');  
 
 const pool = new Pool({
     connectionString: process.env.POSTGREE_URL,
