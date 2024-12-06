@@ -13,5 +13,4 @@ const sequelize = new Sequelize({
     logging: false,
 });
 
-console.log("pass = ", process.env.POSTGRES_PASSWORD);
 module.exports = sequelize;
