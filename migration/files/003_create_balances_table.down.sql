@@ -1,1 +1,1 @@
-DROP TABLE IF EXISTS balances;
+DROP TABLE IF EXISTS balances_hist;

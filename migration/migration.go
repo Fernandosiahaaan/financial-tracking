@@ -29,6 +29,7 @@ func main() {
 
 	// sdadsa
 	err = m.Up()
+	// err = m.Down()
 	if err != nil && err != migrate.ErrNoChange {
 		log.Fatalf("Failed to run migrations: %v", err)
 	}
