@@ -9,5 +9,5 @@ func main() {
 	r.GET("/orders", func(c *gin.Context) {
 		c.JSON(200, gin.H{"message": "Order list"})
 	})
-	r.Run(":8080")
+	r.Run(":8082")
 }
