@@ -1,10 +1,6 @@
-version: '3.8'
+version: '3'
 
 services:
-  ############################################
-  ##              ELK Stack                ##
-  ############################################
-
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.5.0
     environment:
@@ -13,18 +9,20 @@ services:
     ports:
       - "9200:9200"
     volumes:
-      - es_data:/usr/share/elasticsearch/data
+      - esdata:/usr/share/elasticsearch/data  # Menyimpan data di volume Elasticsearch
     networks:
-      - default
+      - defaults
 
   logstash:
     image: docker.elastic.co/logstash/logstash:8.5.0
+    environment:
+      - LOGSTASH_HOST=logstash
     volumes:
       - ./elk/logstash/pipeline:/usr/share/logstash/pipeline
     ports:
       - "5044:5044"
     networks:
-      - default
+      - defaults
 
   kibana:
     image: docker.elastic.co/kibana/kibana:8.5.0
@@ -33,12 +31,8 @@ services:
     ports:
       - "5601:5601"
     networks:
-      - default
-
-  ############################################
-  ##          PostgreSQL (App)             ##
-  ############################################
-
+      - defaults
+  
   postgres:
     image: postgres
     container_name: postgres
@@ -50,13 +44,9 @@ services:
       POSTGRES_PASSWORD: admin123
       POSTGRES_DB: financial-tracking
     volumes:
-      - app_pg_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     networks:
-      - default
-
-  ############################################
-  ##                 Redis                  ##
-  ############################################
+      - defaults
 
   redis:
     image: redis
@@ -70,31 +60,43 @@ services:
       timeout: 3s
       retries: 5
     networks:
-      - default
+      - defaults
 
-  ############################################
-  ##                MongoDB                 ##
-  ############################################
+  # mysql:
+  #   image: mysql:5.7
+  #   container_name: mysql
+  #   platform: linux/amd64
+  #   ports:
+  #     - "3306:3306"
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: password
+  #     MYSQL_DATABASE: mydatabase
+  #     MYSQL_USER: user
+  #     MYSQL_PASSWORD: password
+  #   networks:
+  #     - defaults
 
   mongodb:
     image: mongo:4.4
     container_name: mongodb
     platform: linux/amd64
     ports:
-      - "27017:27017"
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: password
-      MONGO_INITDB_DATABASE: task_management_logs
+      - "27017:27017"   
     volumes:
-      - mongo_data:/data/db
+      - mongo_data:/data/db  # Volume for persistent data
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin    
+      MONGO_INITDB_ROOT_PASSWORD: password 
+      MONGO_INITDB_DATABASE: task_management_logs
+    # healthcheck:
+    #   test: ["CMD", "mongo", "--eval", "db.runCommand({ ping: 1 })"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 5
     networks:
-      - default
-
-  ############################################
-  ##           Monitoring Tools            ##
-  ############################################
-
+      - defaults
+  
+  # Prometheus
   prometheus:
     image: prom/prometheus
     ports:
@@ -102,8 +104,9 @@ services:
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
     networks:
-      - default
+      - defaults
 
+  # Grafana
   grafana:
     image: grafana/grafana
     ports:
@@ -113,20 +116,17 @@ services:
     depends_on:
       - prometheus
     networks:
-      - default
+      - defaults
 
-  ############################################
-  ##         Kafka & Zookeeper             ##
-  ############################################
-
+  # Kafka & Zookeeper
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
-    ports:
-      - "2181:2181"
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
+    ports:
+      - "2181:2181"
     networks:
-      - default
+      - defaults
 
   kafka:
     image: confluentinc/cp-kafka:7.5.0
@@ -139,26 +139,8 @@ services:
     depends_on:
       - zookeeper
     networks:
-      - default
-
-  ############################################
-  ##         Kong Gateway & Konga          ##
-  ############################################
-  kong-migrations:
-    image: kong:3.6
-    restart: "no"
-    depends_on:
-      - kong-database
-    environment:
-      KONG_DATABASE: "postgres"
-      KONG_PG_HOST: kong-database
-      KONG_PG_USER: kong
-      KONG_PG_PASSWORD: kongpass
-      KONG_PG_DATABASE: kong
-    command: kong migrations bootstrap
-    networks:
-      - kong-net
-
+      - defaults
+  
   kong-database:
     image: postgres:13
     networks:
@@ -179,8 +161,8 @@ services:
     networks:
       - kong-net
     ports:
-      - "8009:8000"
-      - "8008:8001"
+      - "8000:8000"
+      - "8001:8001"
       - "8443:8443"
       - "8444:8444"
     environment:
@@ -196,7 +178,6 @@ services:
       KONG_ADMIN_LISTEN: 0.0.0.0:8001
       KONG_LOG_LEVEL: debug
     depends_on:
-      - kong-migrations
       - kong-database
     volumes:
       - ./plugins/hello-plugin/configs/config.json:/kong/configs/config.json
@@ -213,21 +194,15 @@ services:
     depends_on:
       - kong
 
-
-#################################################
-#                 NETWORKS                      #
-#################################################
 networks:
-  default:
+  defaults:
     driver: bridge
   kong-net:
     driver: bridge
 
-#################################################
-#                 VOLUMES                       #
-#################################################
 volumes:
-  es_data:
-  app_pg_data:
-  kong_pg_data:
+  esdata:
+    # driver: local  # Gunakan driver volume lokal untuk data Elasticsearch
+  postgres_data:
   mongo_data:
+    # driver: local
