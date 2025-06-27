@@ -1,6 +1,7 @@
 package com.financial.tracking.service_category.repository;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -14,7 +15,9 @@ import jakarta.transaction.Transactional;
 
 @Repository
 public interface CategoryRepository extends JpaRepository<CategoryModel, UUID> {
-    
+
+    Optional<CategoryModel> findByName(String name);
+
     @Modifying
     @Transactional
     @Query(value = """
