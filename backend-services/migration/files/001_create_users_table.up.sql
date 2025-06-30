@@ -1,3 +1,5 @@
+CREATE TYPE role_type AS ENUM ('USER', 'ADMIN', 'SUPERADMIN');
+
 CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY UNIQUE NOT NULL,
     username VARCHAR(50) UNIQUE NOT NULL,
@@ -5,7 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
     full_name VARCHAR(255) NOT NULL,
     email VARCHAR(100),
     phone_number VARCHAR(100) UNIQUE NOT NULL,
-    role VARCHAR(100) NOT NULL CHECK (role IN ('user', 'admin', 'superadmin')),
+    role role_type NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -17,7 +19,7 @@ CREATE TABLE IF NOT EXISTS users_hist (
     full_name VARCHAR(255) NOT NULL,
     email VARCHAR(100),
     phone_number VARCHAR(100) UNIQUE NOT NULL,
-    role VARCHAR(100) NOT NULL CHECK (role IN ('user', 'admin', 'superadmin')),
+    role role_type NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

@@ -50,7 +50,7 @@ func (h *UserHandler) UserCreate(c *gin.Context) {
 		return
 	}
 	if user.Role == "" {
-		user.Role = "user"
+		user.Role = model.RoleUser
 	}
 
 	userID, err := h.service.CreateNewUser(user)
@@ -142,7 +142,7 @@ func (h *UserHandler) UserGetByID(c *gin.Context) {
 	} else if user == nil {
 		model.CreateResponseHttp(c, http.StatusInternalServerError, model.ResponseHttp{Error: true, Message: fmt.Sprintf("username not found with id '%s'", userID)})
 		return
-	} else if (loginInfo.Role == "user") && (userID != loginInfo.Id) {
+	} else if (loginInfo.Role == model.RoleUser) && (userID != loginInfo.Id) {
 		model.CreateResponseHttp(c, http.StatusForbidden, model.ResponseHttp{Error: true, Message: fmt.Sprintf("user %s doesn't have access get user %s info", loginInfo.Username, user.Username)})
 		return
 	}
@@ -163,7 +163,7 @@ func (h *UserHandler) UserGetAll(c *gin.Context) {
 		return
 	}
 
-	if loginInfo.Role == "user" {
+	if loginInfo.Role == model.RoleUser {
 		model.CreateResponseHttp(c, http.StatusForbidden, model.ResponseHttp{Error: true, Message: fmt.Sprintf("user %s doesn't have access to get all users", loginInfo.Username)})
 		return
 	}

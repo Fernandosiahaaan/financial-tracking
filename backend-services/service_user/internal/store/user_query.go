@@ -33,11 +33,11 @@ func NewUserStore(ctx context.Context) (*UserStore, error) {
 func (r *UserStore) CreateNewUser(user model.User) (string, error) {
 	var id string
 	query := `
-	INSERT INTO users (id, username, password, email, role, created_at, updated_at, deleted_at)
-	VALUES ($1, $2, $3, $4, $5, $6, $7, NULL)
+	INSERT INTO users (id, username, password, full_name, email, phone_number, role, created_at, updated_at)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 	RETURNING id 
 	`
-	err := r.db.QueryRowContext(r.ctx, query, user.ID, user.Username, user.Password, user.Email, user.Role, user.CreatedAt, user.UpdatedAt).Scan(&id)
+	err := r.db.QueryRowContext(r.ctx, query, user.ID, user.Username, user.Password, user.FullName, user.Email, user.PhoneNumber, user.Role, user.CreatedAt, user.UpdatedAt).Scan(&id)
 	return id, err
 }
 
@@ -45,11 +45,20 @@ func (r *UserStore) UpdateUser(user model.User) (string, error) {
 	var id string
 	query := `
         UPDATE users 
-        SET username = $1, password = $2, email = $3, role = $4, updated_at = $5
-        WHERE id = $6 and deleted_at is NULL
+        SET username = $1, password = $2, full_name = $3, email = $4, phone_number = $5, role = $6, updated_at = $7
+        WHERE id = $8
         RETURNING id
     `
-	err := r.db.QueryRowContext(r.ctx, query, user.Username, user.Password, user.Email, user.Role, user.UpdatedAt, user.ID).Scan(&id)
+	err := r.db.QueryRowContext(r.ctx, query,
+		user.Username,
+		user.Password,
+		user.FullName,
+		user.Email,
+		user.PhoneNumber,
+		user.Role,
+		user.UpdatedAt,
+		user.ID,
+	).Scan(&id)
 
 	if err != nil {
 		return "", err
@@ -59,16 +68,18 @@ func (r *UserStore) UpdateUser(user model.User) (string, error) {
 
 func (r *UserStore) GetUserByName(username string) (model.User, error) {
 	query := `
-	SELECT id, username, password, email, role, created_at, updated_at 
+	SELECT id, username, password, full_name, email, phone_number, role, created_at, updated_at
 	FROM users 
-	WHERE username=$1 and deleted_at is NULL
+	WHERE username=$1
 	`
 	var existUser model.User
 	err := r.db.QueryRowContext(r.ctx, query, username).Scan(
 		&existUser.ID,
 		&existUser.Username,
 		&existUser.Password,
+		&existUser.FullName,
 		&existUser.Email,
+		&existUser.PhoneNumber,
 		&existUser.Role,
 		&existUser.CreatedAt,
 		&existUser.UpdatedAt,
@@ -81,16 +92,18 @@ func (r *UserStore) GetUserByName(username string) (model.User, error) {
 
 func (r *UserStore) GetUserById(userId string) (*model.User, error) {
 	query := `
-	SELECT id, username, password, email, role, created_at, updated_at
+	SELECT id, username, password, full_name, email, phone_number, role, created_at, updated_at
 	FROM users 
-	WHERE id=$1 and deleted_at is NULL
+	WHERE id=$1
 	`
 	var existUser *model.User = &model.User{}
 	err := r.db.QueryRowContext(r.ctx, query, userId).Scan(
 		&existUser.ID,
 		&existUser.Username,
 		&existUser.Password,
+		&existUser.FullName,
 		&existUser.Email,
+		&existUser.PhoneNumber,
 		&existUser.Role,
 		&existUser.CreatedAt,
 		&existUser.UpdatedAt,
@@ -106,9 +119,8 @@ func (r *UserStore) GetUserById(userId string) (*model.User, error) {
 
 func (r *UserStore) GetAllUsers() ([]model.User, error) {
 	query := `
-	SELECT id, username, password, email, role, created_at, updated_at
+	SELECT id, username, full_name, email, phone_number, role, created_at, updated_at
 	FROM users
-	WHERE deleted_at is NULL
 	`
 	rows, err := r.db.QueryContext(r.ctx, query)
 	if err != nil {
@@ -122,8 +134,9 @@ func (r *UserStore) GetAllUsers() ([]model.User, error) {
 		err := rows.Scan(
 			&user.ID,
 			&user.Username,
-			&user.Password,
+			&user.FullName,
 			&user.Email,
+			&user.PhoneNumber,
 			&user.Role,
 			&user.CreatedAt,
 			&user.UpdatedAt,

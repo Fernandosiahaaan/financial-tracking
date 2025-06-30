@@ -7,14 +7,15 @@ var (
 )
 
 type User struct {
-	ID        string     `json:"id"`
-	Username  string     `json:"username"`
-	Password  string     `json:"password"`
-	Email     string     `json:"email"`
-	Role      string     `json:"role"`
-	CreatedAt time.Time  `json:"created_at"`
-	UpdatedAt time.Time  `json:"updated_at"`
-	DeletedAt *time.Time `json:"deleted_at"`
+	ID          string    `json:"id"`
+	Username    string    `json:"username"`
+	Password    string    `json:"password"`
+	FullName    string    `json:"full_name"`
+	Email       string    `json:"email"`
+	PhoneNumber string    `json:"phone_number"`
+	Role        RoleType  `json:"role"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 type LoginData struct {
@@ -23,7 +24,24 @@ type LoginData struct {
 }
 
 type LoginCacheData struct {
-	Id       string `json:"id"`
-	Username string `json:"username"`
-	Role     string `json:"role"`
+	Id       string   `json:"id"`
+	Username string   `json:"username"`
+	Role     RoleType `json:"role"`
+}
+
+type RoleType string
+
+const (
+	RoleUser       RoleType = "USER"
+	RoleAdmin      RoleType = "ADMIN"
+	RoleSuperAdmin RoleType = "SUPERADMIN"
+)
+
+func (r RoleType) IsValid() bool {
+	switch r {
+	case RoleUser, RoleAdmin, RoleSuperAdmin:
+		return true
+	}
+
+	return false
 }

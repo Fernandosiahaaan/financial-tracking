@@ -49,7 +49,7 @@ func (s *UserService) CreateNewUser(user model.User) (userID string, err error) 
 	}
 
 	if user.Role == "" {
-		user.Role = "user"
+		user.Role = model.RoleUser
 	}
 	user.CreatedAt = time.Now()
 	user.UpdatedAt = time.Now()
@@ -137,7 +137,7 @@ func (s *UserService) UpdateUser(user model.User) (model.User, error) {
 	user.Password = hashPassword
 	user.UpdatedAt = time.Now()
 	if user.Role == "" {
-		user.Role = "user"
+		user.Role = model.RoleUser
 	}
 
 	id, err := s.repo.UpdateUser(user)

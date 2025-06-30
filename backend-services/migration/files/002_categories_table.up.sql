@@ -1,5 +1,4 @@
--- ENUM untuk tipe transaksiAdd commentMore actions
-CREATE TYPE transaction_type AS ENUM ('INCOME', 'EXPENSE');
+CREATE TYPE transaction_type AS ENUM ('INCOME', 'EXPENSE', 'TRANSFER');
 
 -- Tabel categories
 CREATE TABLE categories (
