@@ -10,19 +10,36 @@ import (
 	"service-user/internal/service"
 	"service-user/internal/store"
 	"service-user/middlewares"
+	"service-user/utils"
 
 	"github.com/joho/godotenv"
 )
 
-func main() {
-	log.Println("=== APP START ===")
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
+func Init() {
 	err := godotenv.Load("../.env")
 	if err != nil {
 		log.Fatalf("Error loading .env file")
 	}
+
+	err = utils.CheckEnvKey([]string{
+		"PORT_HTTP",
+		"REDIS_HOST",
+		"REDIS_PORT",
+		"POSTGRES_URI",
+		"SECRET_KEY",
+	})
+	if err != nil {
+		fmt.Println("========= INIT FAILED =========")
+		log.Fatal(err)
+	}
+	fmt.Println("========= INIT SUCCESS =========")
+}
+
+func main() {
+	Init()
+	log.Println("========= APP START =========")
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	userStore, err := store.NewUserStore(ctx)
 	if err != nil {
