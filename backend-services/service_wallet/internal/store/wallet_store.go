@@ -30,14 +30,14 @@ func NewWalletStore(ctx context.Context) (*WalletStore, error) {
 	}, nil
 }
 
-func (r *WalletStore) CreateNewWallet(wallet models.Wallet) (string, error) {
+func (s *WalletStore) CreateNewWallet(wallet models.Wallet) (string, error) {
 	var id string
 	query := `
 	INSERT INTO wallets (user_id, name, type, balance, created_at, updated_at)
 	VALUES ($1, $2, $3, $4, $5, $6)
 	RETURNING id 
 	`
-	err := r.db.QueryRowContext(r.ctx, query,
+	err := s.db.QueryRowContext(s.ctx, query,
 		wallet.UserId,
 		wallet.Name,
 		wallet.Type,
@@ -49,14 +49,14 @@ func (r *WalletStore) CreateNewWallet(wallet models.Wallet) (string, error) {
 	return id, err
 }
 
-func (r *WalletStore) GetWalletByName(walletName string) (models.Wallet, error) {
+func (s *WalletStore) GetWalletByName(walletName string) (models.Wallet, error) {
 	query := `
 	SELECT id, user_id, name, type, balance, created_at, updated_at
 	FROM wallets
 	WWHERE name = $1  
 	`
 	var existWallet models.Wallet
-	err := r.db.QueryRowContext(r.ctx, query, walletName).Scan(
+	err := s.db.QueryRowContext(s.ctx, query, walletName).Scan(
 		&existWallet.ID,
 		&existWallet.UserId,
 		&existWallet.Name,
@@ -70,4 +70,9 @@ func (r *WalletStore) GetWalletByName(walletName string) (models.Wallet, error) 
 	}
 
 	return existWallet, nil
+}
+
+func (s *WalletStore) Close() {
+	s.db.Close()
+	s.cancel()
 }

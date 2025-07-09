@@ -33,7 +33,7 @@ func (s *WalletService) CreateNewWallet(wallet models.Wallet) (walletId string, 
 	if err != nil && !errors.Is(sql.ErrNoRows, err) {
 		return "", fmt.Errorf("[repository] %v", err)
 	} else if existWallet.Name == wallet.Name {
-		return "", fmt.Errorf("[repository] wallet already created", err)
+		return "", fmt.Errorf("[repository] wallet already created")
 	}
 
 	wallet.CreatedAt = time.Now()
@@ -46,4 +46,8 @@ func (s *WalletService) CreateNewWallet(wallet models.Wallet) (walletId string, 
 	}
 
 	return walletId, err
+}
+
+func (s *WalletService) Close() {
+	s.cancel()
 }

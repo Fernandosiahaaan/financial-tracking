@@ -1,9 +1,13 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
+	"service-wallet/internal/handlers"
+	"service-wallet/internal/services"
+	"service-wallet/internal/store"
 	"service-wallet/utils"
 
 	"github.com/joho/godotenv"
@@ -28,11 +32,35 @@ func Init() {
 
 func main() {
 	Init()
+
 	fmt.Println("========= APP START =========")
-	fmt.Println("test")
-	rout, err := routing()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	walletStore, err := store.NewWalletStore(ctx)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("failed init wallet store. err : ", err)
+	}
+	fmt.Println("🔥 Init Wallet Store...")
+	defer walletStore.Close()
+
+	walletService := services.NewWalletService(ctx, walletStore)
+	if err != nil {
+		log.Fatal("failed init wallet service. err : ", err)
+	}
+	fmt.Println("🔥 Init Wallet Service...")
+	defer walletService.Close()
+
+	walletHandler := handlers.NewUserHandler(ctx, *walletService)
+	if err != nil {
+		log.Fatal("failed init wallet handler. err : ", err)
+	}
+	fmt.Println("🔥 Init Wallet Handler...")
+	defer walletHandler.Close()
+
+	rout, err := routing(walletHandler)
+	if err != nil {
+		log.Fatal("failed init wallet router. err : ", err)
 	}
 
 	portHttp := os.Getenv("PORT_HTTP")
