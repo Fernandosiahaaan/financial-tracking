@@ -8,7 +8,6 @@ import (
 	"service-wallet/internal/models"
 	"service-wallet/internal/models/request"
 	"service-wallet/internal/models/response"
-	model "service-wallet/internal/models/response"
 	"service-wallet/internal/services"
 	validation "service-wallet/internal/validations"
 	"strconv"
@@ -51,14 +50,29 @@ func (h *WalletHandler) WalletCreate(c *gin.Context) {
 		Balance: int64(balance),
 		UserId:  req.UserId,
 	}
-	walletID, err := h.service.CreateNewWallet(&wallet)
+	respOut, err := h.service.CreateNewWallet(&wallet)
 	if err != nil {
-		response.CreateResponseHttp(c, http.StatusInternalServerError, model.ResponseHttp{IsError: true, Message: fmt.Sprintf("failed created wallet '%s'", wallet.Name), MessageErr: err.Error()})
+		response.CreateResponseHttp(c, http.StatusInternalServerError, *respOut)
 		return
 	}
 
-	wallet.ID = walletID
-	model.CreateResponseHttp(c, http.StatusCreated, model.ResponseHttp{IsError: false, Message: fmt.Sprintf("Success created wallet '%s'", wallet.ID), Data: wallet})
+	response.CreateResponseHttp(c, http.StatusCreated, *respOut)
+}
+
+func (h *WalletHandler) GetWalletById(c *gin.Context) {
+	walletID := c.Param("id")
+	if walletID == "" {
+		response.CreateResponseHttp(c, http.StatusBadRequest, response.ResponseHttp{IsError: true, Message: "Invalid User ID uri"})
+		return
+	}
+
+	respOut, err := h.service.GetWalletById(walletID)
+	if err != nil {
+		response.CreateResponseHttp(c, http.StatusInternalServerError, *respOut)
+		return
+	}
+
+	response.CreateResponseHttp(c, http.StatusOK, *respOut)
 }
 
 func (h *WalletHandler) Close() {

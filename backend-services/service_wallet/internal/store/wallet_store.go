@@ -54,13 +54,13 @@ func (s *WalletStore) CreateNewWallet(wallet models.Wallet) (string, error) {
 
 }
 
-func (s *WalletStore) GetWalletByName(walletName string) (models.Wallet, error) {
+func (s *WalletStore) GetWalletByName(walletName string) (*models.Wallet, error) {
 	query := `
 	SELECT id, user_id, name, type, balance, created_at, updated_at
 	FROM wallets
 	WHERE name = $1  
 	`
-	var existWallet models.Wallet
+	var existWallet *models.Wallet = &models.Wallet{}
 	err := s.db.QueryRowContext(s.ctx, query, walletName).Scan(
 		&existWallet.ID,
 		&existWallet.UserId,
@@ -71,7 +71,33 @@ func (s *WalletStore) GetWalletByName(walletName string) (models.Wallet, error) 
 		&existWallet.UpdatedAt,
 	)
 	if err != nil && err != sql.ErrNoRows {
-		return existWallet, fmt.Errorf("failed get wallet with name '%s' to db. err : %v", walletName, err)
+		return nil, fmt.Errorf("failed get wallet with name '%s' to db. err : %v", walletName, err)
+	} else if err == sql.ErrNoRows {
+		return nil, nil
+	}
+
+	return existWallet, nil
+}
+
+func (s *WalletStore) GetWalletById(walletId string) (*models.Wallet, error) {
+	query := `
+	SELECT user_id, name, type, balance, created_at, updated_at
+	FROM wallets
+	WHERE id = $1  
+	`
+	var existWallet *models.Wallet = &models.Wallet{}
+	err := s.db.QueryRowContext(s.ctx, query, walletId).Scan(
+		&existWallet.UserId,
+		&existWallet.Name,
+		&existWallet.Type,
+		&existWallet.Balance,
+		&existWallet.CreatedAt,
+		&existWallet.UpdatedAt,
+	)
+	if err != nil && err != sql.ErrNoRows {
+		return nil, fmt.Errorf("failed get wallet with id '%s' to db. err : %v", walletId, err)
+	} else if err == sql.ErrNoRows {
+		return nil, nil
 	}
 
 	return existWallet, nil
