@@ -44,16 +44,21 @@ func (s *WalletStore) CreateNewWallet(wallet models.Wallet) (string, error) {
 		wallet.Balance,
 		wallet.CreatedAt,
 		wallet.UpdatedAt,
-	).Scan(id)
+	).Scan(&id)
 
-	return id, err
+	if err != nil {
+		return "", fmt.Errorf("failed create wallet to db. err : %v", err)
+	}
+
+	return id, nil
+
 }
 
 func (s *WalletStore) GetWalletByName(walletName string) (models.Wallet, error) {
 	query := `
 	SELECT id, user_id, name, type, balance, created_at, updated_at
 	FROM wallets
-	WWHERE name = $1  
+	WHERE name = $1  
 	`
 	var existWallet models.Wallet
 	err := s.db.QueryRowContext(s.ctx, query, walletName).Scan(
@@ -65,8 +70,8 @@ func (s *WalletStore) GetWalletByName(walletName string) (models.Wallet, error) 
 		&existWallet.CreatedAt,
 		&existWallet.UpdatedAt,
 	)
-	if err != nil {
-		return existWallet, err
+	if err != nil && err != sql.ErrNoRows {
+		return existWallet, fmt.Errorf("failed get wallet with name '%s' to db. err : %v", walletName, err)
 	}
 
 	return existWallet, nil

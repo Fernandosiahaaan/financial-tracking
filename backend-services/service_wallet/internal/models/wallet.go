@@ -7,7 +7,7 @@ type Wallet struct {
 	UserId    string     `json:"user_id"`
 	Name      string     `json:"name"`
 	Type      WalletType `json:"type"`
-	Balance   string     `json:"balance"`
+	Balance   int64      `json:"balance"`
 	CreatedAt time.Time  `json:"created_at"`
 	UpdatedAt time.Time  `json:"updated_at"`
 }

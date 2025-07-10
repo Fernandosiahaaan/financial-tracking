@@ -7,9 +7,10 @@ import (
 )
 
 type ResponseHttp struct {
-	IsError bool        `json:"is_error"`
-	Message string      `json:"message"`
-	Data    interface{} `json:"data"`
+	IsError    bool        `json:"is_error"`
+	Message    string      `json:"message"`
+	MessageErr string      `json:"message_error"`
+	Data       interface{} `json:"data"`
 }
 
 func CreateResponseHttp(c *gin.Context, statusCode int, response ResponseHttp) {
