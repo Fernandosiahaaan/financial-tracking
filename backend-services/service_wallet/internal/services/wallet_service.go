@@ -65,6 +65,26 @@ func (s *WalletService) GetWalletById(id string) (resp *response.ResponseHttp, e
 	return &response.ResponseHttp{IsError: false, Message: fmt.Sprintf("Success created wallet '%s'", id), Data: existWallet}, nil
 }
 
+func (s *WalletService) UpdateWallet(wallet models.Wallet) (resp *response.ResponseHttp, err error) {
+	err = nil
+	var msgErr error = nil
+
+	_, err = s.repo.GetWalletById(wallet.ID)
+	if err != nil {
+		msgErr = utils.MessageError("Repository::GetWalletById", err)
+		return &response.ResponseHttp{IsError: true, Message: fmt.Sprintf("Unknown wallet with id '%s' [E001]", wallet.ID), MessageErr: msgErr.Error()}, msgErr
+	}
+
+	wallet.UpdatedAt = time.Now()
+	_, err = s.repo.UpdateWallet(wallet)
+	if err != nil {
+		msgErr = utils.MessageError("Repository::UpdateUser", err)
+		return &response.ResponseHttp{IsError: true, Message: fmt.Sprintf("Failed update wallet with id '%s' [E002]", wallet.ID), MessageErr: msgErr.Error()}, msgErr
+	}
+
+	return &response.ResponseHttp{IsError: false, Message: fmt.Sprintf("Success update wallet with id '%s'", wallet.ID)}, nil
+}
+
 func (s *WalletService) Close() {
 	s.cancel()
 }

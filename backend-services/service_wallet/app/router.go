@@ -18,6 +18,7 @@ func routing(handler *handlers.WalletHandler) (*gin.Engine, error) {
 	rout.GET("/ping", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"message": "pong"}) })
 	rout.POST("/wallet", handler.WalletCreate)
 	rout.GET("/wallet/:id", handler.GetWalletById)
+	rout.PUT("/wallet/:id", handler.WalletUpdate)
 	return rout, nil
 }
 

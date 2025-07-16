@@ -11,3 +11,11 @@ type CreateWallet struct {
 	Type    models.WalletType `json:"type"`
 	Balance string            `json:"balance"`
 }
+
+type UpdateWallet struct {
+	ReqID    string            `json:"req_id"`
+	WalletID string            `json:"wallet_id"`
+	Name     string            `json:"name"`
+	Type     models.WalletType `json:"type"`
+	Balance  string            `json:"balance"`
+}

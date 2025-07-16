@@ -103,6 +103,28 @@ func (s *WalletStore) GetWalletById(walletId string) (*models.Wallet, error) {
 	return existWallet, nil
 }
 
+func (r *WalletStore) UpdateWallet(wallet models.Wallet) (string, error) {
+	var id string
+	query := `
+        UPDATE wallets 
+        SET name = $1, type = $2, balance = $3, updated_at = $4
+        WHERE id = $5
+        RETURNING id
+    `
+	err := r.db.QueryRowContext(r.ctx, query,
+		wallet.Name,
+		wallet.Type,
+		wallet.Balance,
+		wallet.UpdatedAt,
+		wallet.ID,
+	).Scan(&id)
+
+	if err != nil {
+		return "", err
+	}
+	return id, nil
+}
+
 func (s *WalletStore) Close() {
 	s.db.Close()
 	s.cancel()

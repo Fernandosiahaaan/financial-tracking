@@ -75,6 +75,43 @@ func (h *WalletHandler) GetWalletById(c *gin.Context) {
 	response.CreateResponseHttp(c, http.StatusOK, *respOut)
 }
 
+func (h *WalletHandler) WalletUpdate(c *gin.Context) {
+	var req request.UpdateWallet
+
+	walletID := c.Param("id")
+	if walletID == "" {
+		response.CreateResponseHttp(c, http.StatusBadRequest, response.ResponseHttp{IsError: true, Message: "Invalid User ID uri"})
+		return
+	}
+
+	if err := json.NewDecoder(c.Request.Body).Decode(&req); err != nil {
+		response.CreateResponseHttp(c, http.StatusBadRequest, response.ResponseHttp{IsError: true, Message: "failed parse body request", MessageErr: fmt.Sprintf("failed parse body request. err : %v", err)})
+		return
+	}
+
+	req.WalletID = walletID
+	errRedaksi, errSystem := validation.ValidationUpdateWallet(req)
+	if errRedaksi != nil {
+		response.CreateResponseHttp(c, http.StatusBadRequest, response.ResponseHttp{IsError: true, Message: errRedaksi.Error(), MessageErr: errSystem.Error()})
+		return
+	}
+
+	balance, _ := strconv.Atoi(req.Balance)
+	var wallet models.Wallet = models.Wallet{
+		Name:    req.Name,
+		Type:    req.Type,
+		Balance: int64(balance),
+		ID:      req.WalletID,
+	}
+	respOut, err := h.service.UpdateWallet(wallet)
+	if err != nil {
+		response.CreateResponseHttp(c, http.StatusInternalServerError, *respOut)
+		return
+	}
+
+	response.CreateResponseHttp(c, http.StatusCreated, *respOut)
+}
+
 func (h *WalletHandler) Close() {
 	h.cancel()
 }
