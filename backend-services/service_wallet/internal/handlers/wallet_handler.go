@@ -30,7 +30,7 @@ func NewUserHandler(ctx context.Context, service services.WalletService) *Wallet
 	}
 }
 
-func (h *WalletHandler) WalletCreate(c *gin.Context) {
+func (h *WalletHandler) CreateWallet(c *gin.Context) {
 	var req request.CreateWallet
 	if err := json.NewDecoder(c.Request.Body).Decode(&req); err != nil {
 		response.CreateResponseHttp(c, http.StatusBadRequest, response.ResponseHttp{IsError: true, Message: "failed parse body request", MessageErr: fmt.Sprintf("failed parse body request. err : %v", err)})
@@ -66,6 +66,12 @@ func (h *WalletHandler) GetWalletById(c *gin.Context) {
 		return
 	}
 
+	errRedaksi, errSystem := validation.ValidateUUID("Wallet ID", walletID)
+	if errRedaksi != nil {
+		response.CreateResponseHttp(c, http.StatusBadRequest, response.ResponseHttp{IsError: true, Message: errRedaksi.Error(), MessageErr: errSystem.Error()})
+		return
+	}
+
 	respOut, err := h.service.GetWalletById(walletID)
 	if err != nil {
 		response.CreateResponseHttp(c, http.StatusInternalServerError, *respOut)
@@ -75,7 +81,7 @@ func (h *WalletHandler) GetWalletById(c *gin.Context) {
 	response.CreateResponseHttp(c, http.StatusOK, *respOut)
 }
 
-func (h *WalletHandler) WalletUpdate(c *gin.Context) {
+func (h *WalletHandler) UpdateWalletByID(c *gin.Context) {
 	var req request.UpdateWallet
 
 	walletID := c.Param("id")
@@ -101,15 +107,37 @@ func (h *WalletHandler) WalletUpdate(c *gin.Context) {
 		Name:    req.Name,
 		Type:    req.Type,
 		Balance: int64(balance),
-		ID:      req.WalletID,
 	}
-	respOut, err := h.service.UpdateWallet(wallet)
+
+	respOut, err := h.service.UpdateWalletById(walletID, wallet)
 	if err != nil {
 		response.CreateResponseHttp(c, http.StatusInternalServerError, *respOut)
 		return
 	}
 
 	response.CreateResponseHttp(c, http.StatusCreated, *respOut)
+}
+
+func (h *WalletHandler) DeleteWalletById(c *gin.Context) {
+	walletID := c.Param("id")
+	if walletID == "" {
+		response.CreateResponseHttp(c, http.StatusBadRequest, response.ResponseHttp{IsError: true, Message: "Invalid User ID uri"})
+		return
+	}
+
+	errRedaksi, errSystem := validation.ValidateUUID("Wallet ID", walletID)
+	if errRedaksi != nil {
+		response.CreateResponseHttp(c, http.StatusBadRequest, response.ResponseHttp{IsError: true, Message: errRedaksi.Error(), MessageErr: errSystem.Error()})
+		return
+	}
+
+	respOut, err := h.service.DeleteWalletById(walletID)
+	if err != nil {
+		response.CreateResponseHttp(c, http.StatusInternalServerError, *respOut)
+		return
+	}
+
+	response.CreateResponseHttp(c, http.StatusOK, *respOut)
 }
 
 func (h *WalletHandler) Close() {

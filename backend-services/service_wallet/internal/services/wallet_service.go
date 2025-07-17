@@ -65,24 +65,48 @@ func (s *WalletService) GetWalletById(id string) (resp *response.ResponseHttp, e
 	return &response.ResponseHttp{IsError: false, Message: fmt.Sprintf("Success created wallet '%s'", id), Data: existWallet}, nil
 }
 
-func (s *WalletService) UpdateWallet(wallet models.Wallet) (resp *response.ResponseHttp, err error) {
+func (s *WalletService) UpdateWalletById(id string, walletUpdate models.Wallet) (resp *response.ResponseHttp, err error) {
 	err = nil
 	var msgErr error = nil
 
-	_, err = s.repo.GetWalletById(wallet.ID)
+	// Check wallet if exist
+	_, err = s.repo.GetWalletById(id)
 	if err != nil {
 		msgErr = utils.MessageError("Repository::GetWalletById", err)
-		return &response.ResponseHttp{IsError: true, Message: fmt.Sprintf("Unknown wallet with id '%s' [E001]", wallet.ID), MessageErr: msgErr.Error()}, msgErr
+		return &response.ResponseHttp{IsError: true, Message: fmt.Sprintf("Unknown wallet with id '%s' [E001]", id), MessageErr: msgErr.Error()}, msgErr
 	}
 
-	wallet.UpdatedAt = time.Now()
-	_, err = s.repo.UpdateWallet(wallet)
+	// Update Wallet
+	walletUpdate.ID = id
+	walletUpdate.UpdatedAt = time.Now()
+	err = s.repo.UpdateWalletById(walletUpdate)
 	if err != nil {
-		msgErr = utils.MessageError("Repository::UpdateUser", err)
-		return &response.ResponseHttp{IsError: true, Message: fmt.Sprintf("Failed update wallet with id '%s' [E002]", wallet.ID), MessageErr: msgErr.Error()}, msgErr
+		msgErr = utils.MessageError("Repository::UpdateWalletById", err)
+		return &response.ResponseHttp{IsError: true, Message: fmt.Sprintf("Failed update wallet with id '%s' [E002]", walletUpdate.ID), MessageErr: msgErr.Error()}, msgErr
 	}
 
-	return &response.ResponseHttp{IsError: false, Message: fmt.Sprintf("Success update wallet with id '%s'", wallet.ID)}, nil
+	return &response.ResponseHttp{IsError: false, Message: fmt.Sprintf("Success update wallet with id '%s'", walletUpdate.ID)}, nil
+}
+
+func (s *WalletService) DeleteWalletById(id string) (resp *response.ResponseHttp, err error) {
+	err = nil
+	var msgErr error = nil
+
+	// Check wallet if exist
+	_, err = s.repo.GetWalletById(id)
+	if err != nil {
+		msgErr = utils.MessageError("Repository::GetWalletById", err)
+		return &response.ResponseHttp{IsError: true, Message: fmt.Sprintf("Unknown wallet with id '%s' [E001]", id), MessageErr: msgErr.Error()}, msgErr
+	}
+
+	// Delete Wallet
+	err = s.repo.DeleteWalletById(id)
+	if err != nil {
+		msgErr = utils.MessageError("Repository::DeleteWalletById", err)
+		return &response.ResponseHttp{IsError: true, Message: fmt.Sprintf("Failed delete wallet with id '%s' [E002]", id), MessageErr: msgErr.Error()}, msgErr
+	}
+
+	return &response.ResponseHttp{IsError: false, Message: fmt.Sprintf("Success delete wallet with id '%s'", id)}, nil
 }
 
 func (s *WalletService) Close() {

@@ -26,11 +26,7 @@ func ValidationCreateWallet(params request.CreateWallet) (errRedaksi, errSystem 
 		return fmt.Errorf("Data 'Balance' : '%s' is not value.", params.Balance), fmt.Errorf("failed convert str to int of params.Balance(%s). err : %v", params.Balance, err)
 	}
 
-	if _, err := uuid.Parse(params.UserId); err != nil {
-		return fmt.Errorf("user id('%s') is not valid system", params.UserId), fmt.Errorf("failed parse uuid of params.UserId '%s'. err : %v", params.UserId, err)
-	}
-
-	return nil, nil
+	return ValidateUUID("User ID", params.UserId)
 }
 
 func ValidationUpdateWallet(params request.UpdateWallet) (errRedaksi, errSystem error) {
@@ -50,9 +46,15 @@ func ValidationUpdateWallet(params request.UpdateWallet) (errRedaksi, errSystem 
 		return fmt.Errorf("Data 'Balance' : '%s' is not value.", params.Balance), fmt.Errorf("failed convert str to int of params.Balance(%s). err : %v", params.Balance, err)
 	}
 
-	if _, err := uuid.Parse(params.WalletID); err != nil {
-		return fmt.Errorf("wallet id('%s') is not valid system", params.WalletID), fmt.Errorf("failed parse uuid of WallertId '%s'. err : %v", params.WalletID, err)
+	return ValidateUUID("Wallet ID", params.WalletID)
+}
+
+func ValidateUUID(key, id string) (errRedaksi, errSystem error) {
+
+	if _, err := uuid.Parse(id); err != nil {
+		return fmt.Errorf("%s('%s') is not valid system", key, id), fmt.Errorf("failed parse uuid of WalletId '%s'. err : %v", id, err)
 	}
 
 	return nil, nil
+
 }

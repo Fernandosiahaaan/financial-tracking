@@ -16,9 +16,11 @@ func routing(handler *handlers.WalletHandler) (*gin.Engine, error) {
 
 	// with no middleware
 	rout.GET("/ping", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"message": "pong"}) })
-	rout.POST("/wallet", handler.WalletCreate)
+	rout.POST("/wallet", handler.CreateWallet)
 	rout.GET("/wallet/:id", handler.GetWalletById)
-	rout.PUT("/wallet/:id", handler.WalletUpdate)
+	rout.PUT("/wallet/:id", handler.UpdateWalletByID)
+	rout.DELETE("/wallet/:id", handler.DeleteWalletById)
+
 	return rout, nil
 }
 

@@ -103,26 +103,50 @@ func (s *WalletStore) GetWalletById(walletId string) (*models.Wallet, error) {
 	return existWallet, nil
 }
 
-func (r *WalletStore) UpdateWallet(wallet models.Wallet) (string, error) {
-	var id string
+func (r *WalletStore) UpdateWalletById(wallet models.Wallet) error {
 	query := `
         UPDATE wallets 
         SET name = $1, type = $2, balance = $3, updated_at = $4
         WHERE id = $5
-        RETURNING id
     `
-	err := r.db.QueryRowContext(r.ctx, query,
+	result, err := r.db.ExecContext(r.ctx, query,
 		wallet.Name,
 		wallet.Type,
 		wallet.Balance,
 		wallet.UpdatedAt,
 		wallet.ID,
-	).Scan(&id)
-
+	)
 	if err != nil {
-		return "", err
+		return fmt.Errorf("failed exec update id. err : %v", err)
 	}
-	return id, nil
+
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed check affected update id. err : %v", err)
+	} else if affected <= 0 {
+		return fmt.Errorf("not affected update in table wallets")
+	}
+
+	return nil
+}
+
+func (r *WalletStore) DeleteWalletById(id string) error {
+	query := `
+        DELETE FROM wallets 
+        WHERE id = $1
+    `
+	result, err := r.db.ExecContext(r.ctx, query, id)
+	if err != nil {
+		return fmt.Errorf("failed exec delete id. err : %v", err)
+	}
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed check affected delete id. err : %v", err)
+	} else if affected <= 0 {
+		return fmt.Errorf("not affected delete in table wallets")
+	}
+
+	return nil
 }
 
 func (s *WalletStore) Close() {
