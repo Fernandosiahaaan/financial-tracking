@@ -3,10 +3,13 @@ package services
 import (
 	"context"
 	"fmt"
+	"math"
 	"service-wallet/internal/models"
+	"service-wallet/internal/models/request"
 	"service-wallet/internal/models/response"
 	"service-wallet/internal/store"
 	"service-wallet/utils"
+	"strconv"
 	"time"
 )
 
@@ -107,6 +110,48 @@ func (s *WalletService) DeleteWalletById(id string) (resp *response.ResponseHttp
 	}
 
 	return &response.ResponseHttp{IsError: false, Message: fmt.Sprintf("Success delete wallet with id '%s'", id)}, nil
+}
+
+func (s *WalletService) GetListWallets(params request.GetListWalletRequest) (resp *response.GetListWalletResponse, err error) {
+	err = nil
+	var msgErr error = nil
+
+	// Check wallet if exist
+	datas, total, err := s.repo.GetListWallets(params)
+	if err != nil {
+		msgErr = utils.MessageError("Repository::GetListWallets", err)
+		return &response.GetListWalletResponse{IsError: true, Message: fmt.Sprintf("Failed Get List Wallet [E001]"), MessageErr: msgErr.Error()}, msgErr
+	}
+
+	// Hitung pagination
+	pageNumber, _ := strconv.Atoi(params.Page)
+	if pageNumber <= 0 {
+		pageNumber = 1
+	}
+	pageSize, _ := strconv.Atoi(params.PageItem)
+	if pageSize <= 0 {
+		pageSize = 10
+	}
+	offset := (pageNumber - 1) * pageSize
+
+	pages := int(math.Ceil(float64(total) / float64(pageSize)))
+
+	startItem := offset + 1
+	endItem := offset + pageSize
+	if endItem > total {
+		endItem = total
+	}
+
+	return &response.GetListWalletResponse{
+		IsError:      false,
+		Message:      "Success",
+		Start:        startItem,
+		End:          endItem,
+		Page:         pageNumber,
+		Pages:        pages,
+		RecordsTotal: total,
+		Data:         datas,
+	}, nil
 }
 
 func (s *WalletService) Close() {

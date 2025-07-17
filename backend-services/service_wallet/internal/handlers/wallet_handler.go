@@ -31,7 +31,7 @@ func NewUserHandler(ctx context.Context, service services.WalletService) *Wallet
 }
 
 func (h *WalletHandler) CreateWallet(c *gin.Context) {
-	var req request.CreateWallet
+	var req request.CreateWalletRequest
 	if err := json.NewDecoder(c.Request.Body).Decode(&req); err != nil {
 		response.CreateResponseHttp(c, http.StatusBadRequest, response.ResponseHttp{IsError: true, Message: "failed parse body request", MessageErr: fmt.Sprintf("failed parse body request. err : %v", err)})
 		return
@@ -82,7 +82,7 @@ func (h *WalletHandler) GetWalletById(c *gin.Context) {
 }
 
 func (h *WalletHandler) UpdateWalletByID(c *gin.Context) {
-	var req request.UpdateWallet
+	var req request.UpdateWalletRequest
 
 	walletID := c.Param("id")
 	if walletID == "" {

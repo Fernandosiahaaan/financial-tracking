@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func ValidationCreateWallet(params request.CreateWallet) (errRedaksi, errSystem error) {
+func ValidationCreateWallet(params request.CreateWalletRequest) (errRedaksi, errSystem error) {
 	err := validation.ValidateStruct(&params,
 		validation.Field(&params.ReqID, validation.Required),
 		validation.Field(&params.Name, validation.Required),
@@ -29,7 +29,7 @@ func ValidationCreateWallet(params request.CreateWallet) (errRedaksi, errSystem 
 	return ValidateUUID("User ID", params.UserId)
 }
 
-func ValidationUpdateWallet(params request.UpdateWallet) (errRedaksi, errSystem error) {
+func ValidationUpdateWallet(params request.UpdateWalletRequest) (errRedaksi, errSystem error) {
 	err := validation.ValidateStruct(&params,
 		validation.Field(&params.ReqID, validation.Required),
 		validation.Field(&params.WalletID, validation.Required),

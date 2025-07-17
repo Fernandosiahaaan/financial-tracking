@@ -6,9 +6,14 @@ import (
 	"fmt"
 	"os"
 	"service-wallet/internal/models"
+	"service-wallet/internal/models/request"
+	"strconv"
+	"time"
 
 	_ "github.com/lib/pq"
 )
+
+var defaultValueTimeout time.Duration = 5 * time.Second
 
 type WalletStore struct {
 	db     *sql.DB
@@ -55,13 +60,16 @@ func (s *WalletStore) CreateNewWallet(wallet models.Wallet) (string, error) {
 }
 
 func (s *WalletStore) GetWalletByName(walletName string) (*models.Wallet, error) {
+	ctx, cancel := context.WithTimeout(s.ctx, defaultValueTimeout)
+	defer cancel()
+
 	query := `
 	SELECT id, user_id, name, type, balance, created_at, updated_at
 	FROM wallets
 	WHERE name = $1  
 	`
 	var existWallet *models.Wallet = &models.Wallet{}
-	err := s.db.QueryRowContext(s.ctx, query, walletName).Scan(
+	err := s.db.QueryRowContext(ctx, query, walletName).Scan(
 		&existWallet.ID,
 		&existWallet.UserId,
 		&existWallet.Name,
@@ -80,13 +88,16 @@ func (s *WalletStore) GetWalletByName(walletName string) (*models.Wallet, error)
 }
 
 func (s *WalletStore) GetWalletById(walletId string) (*models.Wallet, error) {
+	ctx, cancel := context.WithTimeout(s.ctx, defaultValueTimeout)
+	defer cancel()
+
 	query := `
 	SELECT user_id, name, type, balance, created_at, updated_at
 	FROM wallets
 	WHERE id = $1  
 	`
 	var existWallet *models.Wallet = &models.Wallet{}
-	err := s.db.QueryRowContext(s.ctx, query, walletId).Scan(
+	err := s.db.QueryRowContext(ctx, query, walletId).Scan(
 		&existWallet.UserId,
 		&existWallet.Name,
 		&existWallet.Type,
@@ -104,12 +115,15 @@ func (s *WalletStore) GetWalletById(walletId string) (*models.Wallet, error) {
 }
 
 func (r *WalletStore) UpdateWalletById(wallet models.Wallet) error {
+	ctx, cancel := context.WithTimeout(r.ctx, defaultValueTimeout)
+	defer cancel()
+
 	query := `
         UPDATE wallets 
         SET name = $1, type = $2, balance = $3, updated_at = $4
         WHERE id = $5
     `
-	result, err := r.db.ExecContext(r.ctx, query,
+	result, err := r.db.ExecContext(ctx, query,
 		wallet.Name,
 		wallet.Type,
 		wallet.Balance,
@@ -131,11 +145,14 @@ func (r *WalletStore) UpdateWalletById(wallet models.Wallet) error {
 }
 
 func (r *WalletStore) DeleteWalletById(id string) error {
+	ctx, cancel := context.WithTimeout(r.ctx, defaultValueTimeout)
+	defer cancel()
+
 	query := `
         DELETE FROM wallets 
         WHERE id = $1
     `
-	result, err := r.db.ExecContext(r.ctx, query, id)
+	result, err := r.db.ExecContext(ctx, query, id)
 	if err != nil {
 		return fmt.Errorf("failed exec delete id. err : %v", err)
 	}
@@ -147,6 +164,61 @@ func (r *WalletStore) DeleteWalletById(id string) error {
 	}
 
 	return nil
+}
+
+func (r *WalletStore) GetListWallets(params request.GetListWalletRequest) ([]models.Wallet, int, error) {
+	ctx, cancel := context.WithTimeout(r.ctx, 5*time.Second)
+	defer cancel()
+
+	// Default pagination
+	pageNumber, _ := strconv.Atoi(params.Page)
+	if pageNumber <= 0 {
+		pageNumber = 1
+	}
+	pageSize, _ := strconv.Atoi(params.PageItem)
+	if pageSize <= 0 {
+		pageSize = 10
+	}
+	offset := (pageNumber - 1) * pageSize
+
+	// Filter query
+	filterQuery := `WHERE 1=1`
+	if params.FilterBy != "" && params.FilterValue != "" {
+		filterQuery += fmt.Sprintf(" AND %s ILIKE '%%%s%%'", params.FilterBy, params.FilterValue)
+	}
+
+	// Hitung total data
+	var total int
+	countQuery := `SELECT COUNT(*) FROM wallets ` + filterQuery
+	if err := r.db.QueryRowContext(ctx, countQuery).Scan(&total); err != nil {
+		return nil, 0, fmt.Errorf("failed to count wallets: %v", err)
+	}
+
+	// Ambil data paginated
+	query := fmt.Sprintf(`
+        SELECT id, name, type, balance, updated_at
+        FROM wallets
+        %s
+        ORDER BY updated_at DESC
+        LIMIT $1 OFFSET $2
+    `, filterQuery)
+
+	rows, err := r.db.QueryContext(ctx, query, pageSize, offset)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to query wallets: %v", err)
+	}
+	defer rows.Close()
+
+	var wallets []models.Wallet
+	for rows.Next() {
+		var w models.Wallet
+		if err := rows.Scan(&w.ID, &w.Name, &w.Type, &w.Balance, &w.UpdatedAt); err != nil {
+			return nil, 0, fmt.Errorf("failed to scan wallet: %v", err)
+		}
+		wallets = append(wallets, w)
+	}
+
+	return wallets, total, nil
 }
 
 func (s *WalletStore) Close() {
