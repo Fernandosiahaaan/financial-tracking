@@ -140,6 +140,29 @@ func (h *WalletHandler) DeleteWalletById(c *gin.Context) {
 	response.CreateResponseHttp(c, http.StatusOK, *respOut)
 }
 
+func (h *WalletHandler) GetListWallets(c *gin.Context) {
+	var req request.GetListWalletRequest
+
+	if err := json.NewDecoder(c.Request.Body).Decode(&req); err != nil {
+		response.CreateResponseHttp(c, http.StatusBadRequest, response.ResponseHttp{IsError: true, Message: "failed parse body request", MessageErr: fmt.Sprintf("failed parse body request. err : %v", err)})
+		return
+	}
+
+	errRedaksi, errSystem := validation.ValidationGetListWallet(req)
+	if errRedaksi != nil {
+		response.CreateResponseHttp(c, http.StatusBadRequest, response.ResponseHttp{IsError: true, Message: errRedaksi.Error(), MessageErr: errSystem.Error()})
+		return
+	}
+
+	respOut, err := h.service.GetListWallets(req)
+	if err != nil {
+		response.CreateResponseHttp(c, http.StatusInternalServerError, *respOut)
+		return
+	}
+
+	response.CreateResponseHttp(c, http.StatusCreated, *respOut)
+}
+
 func (h *WalletHandler) Close() {
 	h.cancel()
 }

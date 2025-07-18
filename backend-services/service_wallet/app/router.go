@@ -20,6 +20,7 @@ func routing(handler *handlers.WalletHandler) (*gin.Engine, error) {
 	rout.GET("/wallet/:id", handler.GetWalletById)
 	rout.PUT("/wallet/:id", handler.UpdateWalletByID)
 	rout.DELETE("/wallet/:id", handler.DeleteWalletById)
+	rout.POST("/getListWallet", handler.GetListWallets)
 
 	return rout, nil
 }

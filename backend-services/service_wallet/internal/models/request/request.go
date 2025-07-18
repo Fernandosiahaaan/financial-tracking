@@ -21,9 +21,9 @@ type UpdateWalletRequest struct {
 }
 
 type GetListWalletRequest struct {
-	ReqId       string `json:"reqId"`
+	ReqID       string `json:"req_id"`
 	Page        string `json:"page"`
-	PageItem    string `json:"pageItem"`
-	FilterBy    string `json:"filterBy"`
-	FilterValue string `json:"filterValue"`
+	PageItem    string `json:"page_item"`
+	FilterBy    string `json:"filter_by"`
+	FilterValue string `json:"filter_value"`
 }

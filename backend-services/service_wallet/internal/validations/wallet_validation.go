@@ -20,10 +20,9 @@ func ValidationCreateWallet(params request.CreateWalletRequest) (errRedaksi, err
 		return fmt.Errorf("Data 'ReqId', 'Name', 'Type', 'UserId' must fill."), fmt.Errorf("failed validation struct request kuota cabang. err : %v", err)
 	}
 
-	if params.Balance == "" {
-		params.Balance = "0"
-	} else if _, err = strconv.Atoi(params.Balance); (params.Balance != "") && (err != nil) {
-		return fmt.Errorf("Data 'Balance' : '%s' is not value.", params.Balance), fmt.Errorf("failed convert str to int of params.Balance(%s). err : %v", params.Balance, err)
+	errRedaksi, errSystem = ValidateStrInt("Balance", "0", &params.Balance)
+	if errRedaksi != nil || errSystem != nil {
+		return
 	}
 
 	return ValidateUUID("User ID", params.UserId)
@@ -40,13 +39,38 @@ func ValidationUpdateWallet(params request.UpdateWalletRequest) (errRedaksi, err
 		return fmt.Errorf("Data 'ReqId', 'Name', 'Type', 'UserId' must fill."), fmt.Errorf("failed validation struct request kuota cabang. err : %v", err)
 	}
 
-	if params.Balance == "" {
-		params.Balance = "0"
-	} else if _, err = strconv.Atoi(params.Balance); (params.Balance != "") && (err != nil) {
-		return fmt.Errorf("Data 'Balance' : '%s' is not value.", params.Balance), fmt.Errorf("failed convert str to int of params.Balance(%s). err : %v", params.Balance, err)
+	errRedaksi, errSystem = ValidateStrInt("Balance", "0", &params.Balance)
+	if errRedaksi != nil || errSystem != nil {
+		return
 	}
 
 	return ValidateUUID("Wallet ID", params.WalletID)
+}
+
+func ValidationGetListWallet(params request.GetListWalletRequest) (errRedaksi, errSystem error) {
+	err := validation.ValidateStruct(&params,
+		validation.Field(&params.ReqID, validation.Required),
+	)
+	if err != nil {
+		return fmt.Errorf("Data 'ReqId' must fill."), fmt.Errorf("failed validation struct request kuota cabang. err : %v", err)
+	}
+
+	errRedaksi, errSystem = ValidateStrInt("PageItem", "", &params.PageItem)
+	if errRedaksi != nil || errSystem != nil {
+		return
+	}
+
+	return ValidateStrInt("Page", "", &params.Page)
+}
+
+func ValidateStrInt(key, deafultValue string, value *string) (errRedaksi, errSystem error) {
+	if *value == "" {
+		*value = deafultValue
+	} else if _, err := strconv.Atoi(*value); (*value != "") && (err != nil) {
+		return fmt.Errorf("Data '%s' : '%s' is not value.", key, *value), fmt.Errorf("failed convert str to int of params.%s(%s). err : %v", key, *value, err)
+	}
+
+	return nil, nil
 }
 
 func ValidateUUID(key, id string) (errRedaksi, errSystem error) {
