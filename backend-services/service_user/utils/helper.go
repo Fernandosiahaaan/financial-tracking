@@ -13,3 +13,7 @@ func CheckEnvKey(keys []string) error {
 	}
 	return nil
 }
+
+func MessageError(header string, err error) error {
+	return fmt.Errorf("[%s] %v", header, err)
+}

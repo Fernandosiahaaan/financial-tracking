@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"service-user/infrastructure/redis"
 	"service-user/internal/model"
+	"service-user/internal/model/response"
 	"service-user/internal/store"
+	"service-user/utils"
 	"strings"
 	"time"
 
@@ -33,19 +35,25 @@ func NewUserService(ctx context.Context, redis *redis.RedisCln, repo *store.User
 	}
 }
 
-func (s *UserService) CreateNewUser(user model.User) (userID string, err error) {
+func (s *UserService) CreateNewUser(user model.User) (bodyResp response.ResponseHttp, err error) {
+	var msgErr error = nil
 	user.Password = strings.TrimSpace(user.Password)
 	hashPassword, err := s.HashPassword(user.Password)
 	if err != nil {
-		return "", fmt.Errorf("failed hash password. err = %s", err.Error())
+		msgErr = utils.MessageError("Service::CreateNewUser", fmt.Errorf("failed hash password. err : %v", err))
+		return response.ResponseHttp{IsError: true, Message: fmt.Sprintf("failed hash password with username '%s' [E001]", user.Username), MessageErr: msgErr.Error()}, msgErr
 	}
 
 	user.Password = hashPassword
 	existUser, err := s.repo.GetUserByName(user.Username)
 	if err != nil && !errors.Is(sql.ErrNoRows, err) {
-		return "", err
+		msgErr = utils.MessageError("Repository::GetUserByName", err)
+		return response.ResponseHttp{IsError: true, Message: fmt.Sprintf("failed read user with username '%s' [E002]", user.Username), MessageErr: msgErr.Error()}, msgErr
+
 	} else if existUser.Username == user.Username {
-		return "", errors.New("user already created")
+		err = fmt.Errorf("user with username '%s' already created [E003]", existUser.Username)
+		msgErr = utils.MessageError("Service::CreateNewUser", err)
+		return response.ResponseHttp{IsError: true, Message: err.Error(), MessageErr: msgErr.Error()}, msgErr
 	}
 
 	if user.Role == "" {
@@ -55,16 +63,19 @@ func (s *UserService) CreateNewUser(user model.User) (userID string, err error) 
 	user.UpdatedAt = time.Now()
 	user.ID = uuid.New().String()
 
-	userID, err = s.repo.CreateNewUser(user)
+	userID, err := s.repo.CreateNewUser(user)
 	if err != nil {
-		return "", err
+		msgErr = utils.MessageError("Repository::CreateNewUser", err)
+		return response.ResponseHttp{IsError: true, Message: fmt.Sprintf("failed create user with username '%s' [E004]", user.Username), MessageErr: msgErr.Error()}, msgErr
 	}
 
 	if err = s.redis.SaveUserInfo(user); err != nil {
-		return "", err
+		msgErr = utils.MessageError("Redis::SaveUserInfo", err)
+		return response.ResponseHttp{IsError: true, Message: fmt.Sprintf("failed save user with username '%s' to redis [E005]", user.Username), MessageErr: msgErr.Error()}, msgErr
 	}
 
-	return userID, err
+	user.ID = userID
+	return response.ResponseHttp{IsError: false, Message: fmt.Sprintf("success save user with username '%s' ", user.Username)}, nil
 }
 
 func (s *UserService) GetAllUsers() ([]model.User, error) {
@@ -120,7 +131,7 @@ func (s *UserService) GetUserById(userId string) (*model.User, error) {
 
 	existUser, err := s.repo.GetUserById(userId)
 	if err != nil && err != sql.ErrNoRows {
-		return existUser, err
+		return existUser, utils.MessageError("Repo::GetUserById", err)
 	}
 	if err == sql.ErrNoRows {
 		return nil, nil
@@ -128,11 +139,13 @@ func (s *UserService) GetUserById(userId string) (*model.User, error) {
 	return existUser, nil
 }
 
-func (s *UserService) UpdateUser(user model.User) (model.User, error) {
+func (s *UserService) UpdateUser(user model.User) (response.ResponseHttp, error) {
+	var errMsg error = nil
 	user.Password = strings.TrimSpace(user.Password)
 	hashPassword, err := s.HashPassword(user.Password)
 	if err != nil {
-		return model.User{}, fmt.Errorf("failed hash password. err = %s", err.Error())
+		errMsg = utils.MessageError("Repo::GetUserById", err)
+		return response.ResponseHttp{IsError: true, Message: "failed hash password from system", MessageErr: errMsg.Error()}, errMsg
 	}
 	user.Password = hashPassword
 	user.UpdatedAt = time.Now()
@@ -142,14 +155,16 @@ func (s *UserService) UpdateUser(user model.User) (model.User, error) {
 
 	id, err := s.repo.UpdateUser(user)
 	if err != nil {
-		return model.User{}, fmt.Errorf("failed update user %s to db. err = %s", user.Username, err.Error())
+		errMsg = utils.MessageError("Repo::UpdateUser", err)
+		return response.ResponseHttp{IsError: true, Message: fmt.Sprintf("failed update user '%s' to db", user.Username), MessageErr: errMsg.Error()}, errMsg
 	}
 	user.ID = id
 
 	if err = s.redis.SaveUserInfo(user); err != nil {
-		return model.User{}, fmt.Errorf("failed update user %s to redis. err = %s", user.Username, err.Error()) // Kembalikan model.User kosong jika ada error
+		errMsg = utils.MessageError("Repo::UpdateUser", err)
+		return response.ResponseHttp{IsError: true, Message: fmt.Sprintf("failed update user '%s' to redis", user.Username), MessageErr: errMsg.Error()}, errMsg
 	}
-	return user, nil
+	return response.ResponseHttp{IsError: false, Message: fmt.Sprintf("success update user '%s'", user.Username), Data: user}, nil
 }
 
 func (s *UserService) Close() {

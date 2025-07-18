@@ -18,7 +18,7 @@ import (
 func Init() {
 	err := godotenv.Load("../.env")
 	if err != nil {
-		log.Fatalf("Error loading .env file")
+		log.Fatal(utils.MessageError("main::env::Load", err))
 	}
 
 	err = utils.CheckEnvKey([]string{
@@ -29,8 +29,8 @@ func Init() {
 		"SECRET_KEY",
 	})
 	if err != nil {
+		log.Fatal(utils.MessageError("main::Init", err))
 		fmt.Println("========= INIT FAILED =========")
-		log.Fatal(err)
 	}
 	fmt.Println("========= INIT SUCCESS =========")
 }
@@ -43,14 +43,14 @@ func main() {
 
 	userStore, err := store.NewUserStore(ctx)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(utils.MessageError("store::NewUserStore", err))
 	}
 	defer userStore.Close()
 	fmt.Println("🔥 Init Repository...")
 
 	userRedis, err := redis.NewReddisClient(ctx)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(utils.MessageError("redis::NewReddisClient", err))
 	}
 	defer userRedis.Close()
 	fmt.Println("🔥 Init Redis...")
@@ -75,7 +75,7 @@ func main() {
 	// Routing
 	rout, err := routing(userHandler)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(utils.MessageError("main::routing", err))
 	}
 
 	// HTTP Start

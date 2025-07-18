@@ -34,24 +34,25 @@ func NewReddisClient(ctx context.Context) (*RedisCln, error) {
 	}
 	client := redis.NewClient(opts)
 
-	// Ping the Redis server to check the connection
-	_, err := client.Ping().Result()
-	if err != nil {
-		return nil, err
-	}
-
 	var redis *RedisCln = &RedisCln{
 		Redis:  client,
 		Ctx:    ctxRedis,
 		Cancel: cancelRedis,
 	}
+
+	// Ping the Redis server to check the connection
+	_, err := client.Ping().Result()
+	if err != nil {
+		return nil, fmt.Errorf("failed ping redis. err : %v", err)
+	}
+
 	return redis, nil
 }
 
 func (r *RedisCln) SaveUserInfo(user model.User) error {
 	userJson, err := json.Marshal(user)
 	if err != nil {
-		return fmt.Errorf("failed convert user info to json")
+		return fmt.Errorf("failed convert user '%s' info to json", user.ID)
 	}
 
 	// send user info to reddis data
@@ -110,11 +111,11 @@ func (r *RedisCln) GetLoginInfo(jwtToken string) (loginInfo model.LoginCacheData
 	keyLoginInfo := fmt.Sprintf("%s:%s", PrefixKeyLoginInfo, jwtToken)
 	loginJson, err := r.Redis.Get(keyLoginInfo).Result()
 	if err != nil {
-		return loginInfo, fmt.Errorf("failed get login info from redis")
+		return loginInfo, fmt.Errorf("failed get login info from redis. err : %v", err)
 	}
 	err = json.Unmarshal([]byte(loginJson), &loginInfo)
 	if err != nil {
-		return loginInfo, fmt.Errorf("failed convert data login info from json")
+		return loginInfo, fmt.Errorf("failed convert data login info from json. err : %v", err)
 	}
 	return loginInfo, nil
 }

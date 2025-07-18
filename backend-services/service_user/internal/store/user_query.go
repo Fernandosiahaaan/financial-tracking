@@ -38,7 +38,7 @@ func (r *UserStore) CreateNewUser(user model.User) (string, error) {
 	RETURNING id 
 	`
 	err := r.db.QueryRowContext(r.ctx, query, user.ID, user.Username, user.Password, user.FullName, user.Email, user.PhoneNumber, user.Role, user.CreatedAt, user.UpdatedAt).Scan(&id)
-	return id, err
+	return id, fmt.Errorf("err query create user with username '%s' : %v", user.Username, err)
 }
 
 func (r *UserStore) UpdateUser(user model.User) (string, error) {
@@ -61,7 +61,7 @@ func (r *UserStore) UpdateUser(user model.User) (string, error) {
 	).Scan(&id)
 
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("err query update user with id '%s' : %v", user.ID, err)
 	}
 	return id, nil
 }
@@ -85,7 +85,7 @@ func (r *UserStore) GetUserByName(username string) (model.User, error) {
 		&existUser.UpdatedAt,
 	)
 	if err != nil {
-		return existUser, err
+		return existUser, fmt.Errorf("err query get user with username '%s' : %v", username, err)
 	}
 	return existUser, nil
 }
@@ -108,11 +108,8 @@ func (r *UserStore) GetUserById(userId string) (*model.User, error) {
 		&existUser.CreatedAt,
 		&existUser.UpdatedAt,
 	)
-	fmt.Println("userId = ", userId)
-	fmt.Println("exist user = ", existUser)
-	fmt.Println("err = ", err)
 	if err != nil {
-		return existUser, err
+		return existUser, fmt.Errorf("err query get user with id '%s' : %v", existUser.ID, err)
 	}
 	return existUser, nil
 }
@@ -142,13 +139,13 @@ func (r *UserStore) GetAllUsers() ([]model.User, error) {
 			&user.UpdatedAt,
 		)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("err scan user : %v", user)
 		}
 		users = append(users, user)
 	}
 
 	if err = rows.Err(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("err get all user rows : %v", err)
 	}
 
 	return users, nil
