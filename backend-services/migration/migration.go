@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"log"
+	"migration/utils"
 	"os"
+	"strconv"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -12,28 +14,42 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func main() {
-	fmt.Println("--Microservice Migrate Start--")
+func Init() {
 	err := godotenv.Load(".env")
 	if err != nil {
 		log.Fatalf("Error loading .env file")
 	}
+
+	err = utils.CheckEnvKey([]string{
+		"VERSIONING_DB",
+		"POSTGRES_URI",
+	})
+	if err != nil {
+		fmt.Println("========= INIT FAILED =========")
+		log.Fatal(err)
+	}
+	fmt.Println("========= INIT SUCCESS =========")
+}
+
+func main() {
+	Init()
+	fmt.Println("========= MIGRATE PROCESS START =========")
 	dbURL := os.Getenv("POSTGRES_URI")
-	m, err := migrate.New(
-		"file://files",
-		dbURL,
-	)
+	migrationing, err := migrate.New("file://files", dbURL)
 	if err != nil {
 		log.Fatalf("failed create migrate instance : %v", err)
 	}
 
 	// Action
-	err = m.Up()
-	// err = m.Down()
+	versioningDB := os.Getenv("VERSIONING_DB")
+	vDb, _ := strconv.Atoi(versioningDB)
+	if err != nil {
+		log.Fatalf("failed convert 'VERSIONING_DB' to UINT : %s. Err : %v", versioningDB, err)
+	}
+
+	err = migrationing.Migrate(uint(vDb))
 	if err != nil && err != migrate.ErrNoChange {
 		log.Fatalf("Failed to run migrations: %v", err)
 	}
-
-	log.Println("Migrations ran successfully")
-
+	fmt.Println("========= MIGRATE PROCESS SUCCESSFULLY =========")
 }
