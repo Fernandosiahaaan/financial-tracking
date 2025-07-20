@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(100),
     phone_number VARCHAR(100) UNIQUE NOT NULL,
     role role_type NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -20,6 +21,7 @@ CREATE TABLE IF NOT EXISTS users_hist (
     email VARCHAR(100),
     phone_number VARCHAR(100) UNIQUE NOT NULL,
     role role_type NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

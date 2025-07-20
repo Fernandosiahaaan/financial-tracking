@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"service-user/infrastructure/redis"
 	"service-user/internal/model"
+	"service-user/internal/model/request"
 	"service-user/internal/model/response"
 	"service-user/internal/store"
 	"service-user/utils"
@@ -35,47 +36,51 @@ func NewUserService(ctx context.Context, redis *redis.RedisCln, repo *store.User
 	}
 }
 
-func (s *UserService) CreateNewUser(user model.User) (bodyResp response.ResponseHttp, err error) {
+func (s *UserService) CreateNewUser(createUser request.CreateUserRequest) (bodyResp response.ResponseHttp, err error) {
 	var msgErr error = nil
-	user.Password = strings.TrimSpace(user.Password)
-	hashPassword, err := s.HashPassword(user.Password)
+	createUser.Password = strings.TrimSpace(createUser.Password)
+	hashPassword, err := s.HashPassword(createUser.Password)
 	if err != nil {
 		msgErr = utils.MessageError("Service::CreateNewUser", fmt.Errorf("failed hash password. err : %v", err))
-		return response.ResponseHttp{IsError: true, Message: fmt.Sprintf("failed hash password with username '%s' [E001]", user.Username), MessageErr: msgErr.Error()}, msgErr
+		return response.ResponseHttp{IsError: true, Message: fmt.Sprintf("failed hash password with username '%s' [E001]", createUser.Username), MessageErr: msgErr.Error()}, msgErr
 	}
 
-	user.Password = hashPassword
-	existUser, err := s.repo.GetUserByName(user.Username)
-	if err != nil && !errors.Is(sql.ErrNoRows, err) {
+	createUser.Password = hashPassword
+	existUser, err := s.repo.GetUserByName(createUser.Username)
+	if err != nil {
 		msgErr = utils.MessageError("Repository::GetUserByName", err)
-		return response.ResponseHttp{IsError: true, Message: fmt.Sprintf("failed read user with username '%s' [E002]", user.Username), MessageErr: msgErr.Error()}, msgErr
-
-	} else if existUser.Username == user.Username {
+		return response.ResponseHttp{IsError: true, Message: fmt.Sprintf("failed read user with username '%s' [E002]", createUser.Username), MessageErr: msgErr.Error()}, msgErr
+	} else if existUser != nil {
 		err = fmt.Errorf("user with username '%s' already created [E003]", existUser.Username)
 		msgErr = utils.MessageError("Service::CreateNewUser", err)
 		return response.ResponseHttp{IsError: true, Message: err.Error(), MessageErr: msgErr.Error()}, msgErr
 	}
 
-	if user.Role == "" {
-		user.Role = model.RoleUser
+	var user model.User = model.User{
+		ID:          uuid.New().String(),
+		Username:    createUser.Username,
+		Password:    createUser.Password,
+		FullName:    createUser.FullName,
+		Email:       createUser.Email,
+		PhoneNumber: createUser.PhoneNumber,
+		Role:        createUser.Role,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
 	}
-	user.CreatedAt = time.Now()
-	user.UpdatedAt = time.Now()
-	user.ID = uuid.New().String()
 
 	userID, err := s.repo.CreateNewUser(user)
 	if err != nil {
 		msgErr = utils.MessageError("Repository::CreateNewUser", err)
-		return response.ResponseHttp{IsError: true, Message: fmt.Sprintf("failed create user with username '%s' [E004]", user.Username), MessageErr: msgErr.Error()}, msgErr
+		return response.ResponseHttp{IsError: true, Message: fmt.Sprintf("failed create user with username '%s' [E004]", createUser.Username), MessageErr: msgErr.Error()}, msgErr
 	}
 
 	if err = s.redis.SaveUserInfo(user); err != nil {
 		msgErr = utils.MessageError("Redis::SaveUserInfo", err)
-		return response.ResponseHttp{IsError: true, Message: fmt.Sprintf("failed save user with username '%s' to redis [E005]", user.Username), MessageErr: msgErr.Error()}, msgErr
+		return response.ResponseHttp{IsError: true, Message: fmt.Sprintf("failed save user with username '%s' to redis [E005]", createUser.Username), MessageErr: msgErr.Error()}, msgErr
 	}
 
 	user.ID = userID
-	return response.ResponseHttp{IsError: false, Message: fmt.Sprintf("success save user with username '%s' ", user.Username)}, nil
+	return response.ResponseHttp{IsError: false, Message: fmt.Sprintf("success save user with username '%s' ", createUser.Username), Data: user}, nil
 }
 
 func (s *UserService) GetAllUsers() ([]model.User, error) {
@@ -109,18 +114,18 @@ func (s *UserService) GetUserByName(user model.User) (model.User, error) {
 	existUser, err := s.repo.GetUserByName(user.Username)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return existUser, fmt.Errorf("username not found")
+			return *existUser, fmt.Errorf("username not found")
 		}
-		return existUser, fmt.Errorf("error sql. err = %s", err.Error())
+		return *existUser, fmt.Errorf("error sql. err = %s", err.Error())
 	}
 
 	// Verifikasi apakah password cocok dengan hash
 	match := s.VerifyPassword(user.Password, existUser.Password)
 	if !match {
-		return existUser, fmt.Errorf("password not equal")
+		return *existUser, fmt.Errorf("password not equal")
 	}
 
-	return existUser, nil
+	return *existUser, nil
 }
 
 func (s *UserService) GetUserById(userId string) (*model.User, error) {

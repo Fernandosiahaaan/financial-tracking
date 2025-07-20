@@ -38,7 +38,10 @@ func (r *UserStore) CreateNewUser(user model.User) (string, error) {
 	RETURNING id 
 	`
 	err := r.db.QueryRowContext(r.ctx, query, user.ID, user.Username, user.Password, user.FullName, user.Email, user.PhoneNumber, user.Role, user.CreatedAt, user.UpdatedAt).Scan(&id)
-	return id, fmt.Errorf("err query create user with username '%s' : %v", user.Username, err)
+	if err != nil {
+		return id, fmt.Errorf("err query create user with username '%s' : %v", user.Username, err)
+	}
+	return id, nil
 }
 
 func (r *UserStore) UpdateUser(user model.User) (string, error) {
@@ -66,7 +69,7 @@ func (r *UserStore) UpdateUser(user model.User) (string, error) {
 	return id, nil
 }
 
-func (r *UserStore) GetUserByName(username string) (model.User, error) {
+func (r *UserStore) GetUserByName(username string) (*model.User, error) {
 	query := `
 	SELECT id, username, password, full_name, email, phone_number, role, created_at, updated_at
 	FROM users 
@@ -84,10 +87,13 @@ func (r *UserStore) GetUserByName(username string) (model.User, error) {
 		&existUser.CreatedAt,
 		&existUser.UpdatedAt,
 	)
-	if err != nil {
-		return existUser, fmt.Errorf("err query get user with username '%s' : %v", username, err)
+	if err != nil && err != sql.ErrNoRows {
+		return &existUser, fmt.Errorf("err query get user with username '%s' : %v", username, err)
+	} else if err == sql.ErrNoRows {
+		return nil, nil
 	}
-	return existUser, nil
+
+	return &existUser, nil
 }
 
 func (r *UserStore) GetUserById(userId string) (*model.User, error) {

@@ -7,9 +7,11 @@ import (
 	"net/http"
 	"service-user/infrastructure/redis"
 	"service-user/internal/model"
+	"service-user/internal/model/request"
 	"service-user/internal/model/response"
 	"service-user/internal/service"
 	"service-user/internal/store"
+	"service-user/internal/validations"
 	"service-user/middlewares"
 	"service-user/utils"
 
@@ -46,17 +48,21 @@ func NewUserHandler(param ParamHandler) *UserHandler {
 }
 
 func (h *UserHandler) UserCreate(c *gin.Context) {
-	var user model.User
-	if err := json.NewDecoder(c.Request.Body).Decode(&user); err != nil {
+	// var userReq model.User
+	var userReq request.CreateUserRequest
+	if err := json.NewDecoder(c.Request.Body).Decode(&userReq); err != nil {
 		response.CreateResponseHttp(c, http.StatusBadRequest, response.ResponseHttp{IsError: true, Message: "failed parse body request", MessageErr: fmt.Sprintf("failed parse body request. err : %v", err)})
 		return
 	}
-	if user.Role == "" {
-		user.Role = model.RoleUser
+
+	msg, err := validations.ValidationCreateUser(&userReq)
+	if err != nil {
+		response.CreateResponseHttp(c, http.StatusBadRequest, response.ResponseHttp{IsError: true, Message: msg.Error(), MessageErr: err.Error()})
+		return
 	}
 
 	var statusCode int = 201
-	bodyResp, err := h.service.CreateNewUser(user)
+	bodyResp, err := h.service.CreateNewUser(userReq)
 	if err != nil {
 		statusCode = http.StatusInternalServerError
 	}
