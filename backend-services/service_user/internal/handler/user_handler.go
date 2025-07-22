@@ -71,13 +71,19 @@ func (h *UserHandler) UserCreate(c *gin.Context) {
 }
 
 func (h *UserHandler) UserLogin(c *gin.Context) {
-	var user model.User
-	if err := json.NewDecoder(c.Request.Body).Decode(&user); err != nil {
+	var userLogin request.LoginRequest
+	if err := json.NewDecoder(c.Request.Body).Decode(&userLogin); err != nil {
 		response.CreateResponseHttp(c, http.StatusBadRequest, response.ResponseHttp{IsError: true, Message: "failed parse body request"})
 		return
 	}
 
-	user, err := h.service.GetUserByName(user)
+	msgErr, err := validations.ValidationLogin(&userLogin)
+	if err != nil {
+		response.CreateResponseHttp(c, http.StatusBadRequest, response.ResponseHttp{IsError: true, Message: msgErr.Error(), MessageErr: err.Error()})
+		return
+	}
+
+	user, err := h.service.GetUserLogin(userLogin.Username, userLogin.Password)
 	if err != nil {
 		response.CreateResponseHttp(c, http.StatusBadRequest, response.ResponseHttp{IsError: true, Message: err.Error()})
 		return

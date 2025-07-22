@@ -13,3 +13,9 @@ type CreateUserRequest struct {
 	PhoneNumber string         `json:"phone_number"`
 	Role        model.RoleType `json:"role"`
 }
+
+type LoginRequest struct {
+	ReqID    string `json:"req_id"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+}

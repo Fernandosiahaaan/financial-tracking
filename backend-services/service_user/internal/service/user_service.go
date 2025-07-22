@@ -110,8 +110,8 @@ func (s *UserService) GetAllUsers() ([]model.User, error) {
 	return usersInfo, nil
 }
 
-func (s *UserService) GetUserByName(user model.User) (model.User, error) {
-	existUser, err := s.repo.GetUserByName(user.Username)
+func (s *UserService) GetUserLogin(userName, password string) (model.User, error) {
+	existUser, err := s.repo.GetUserByName(userName)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return *existUser, fmt.Errorf("username not found")
@@ -120,7 +120,7 @@ func (s *UserService) GetUserByName(user model.User) (model.User, error) {
 	}
 
 	// Verifikasi apakah password cocok dengan hash
-	match := s.VerifyPassword(user.Password, existUser.Password)
+	match := s.VerifyPassword(password, existUser.Password)
 	if !match {
 		return *existUser, fmt.Errorf("password not equal")
 	}
