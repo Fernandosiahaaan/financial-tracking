@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"service-user/infrastructure/redis"
 	"service-user/internal/model"
@@ -86,6 +85,7 @@ func (s *UserService) CreateNewUser(createUser request.CreateUserRequest) (bodyR
 func (s *UserService) GetAllUsers() ([]model.User, error) {
 	var usersInfo []model.User = []model.User{}
 	var err error
+	var msgErr error = nil
 
 	if flagCacthAllUsers {
 		usersInfo, err = s.redis.GetAllUserInfo()
@@ -96,7 +96,8 @@ func (s *UserService) GetAllUsers() ([]model.User, error) {
 
 	usersInfo, err = s.repo.GetAllUsers()
 	if err != nil {
-		return nil, err
+		msgErr = utils.MessageError("Repository::GetAllUsers", err)
+		return nil, msgErr
 	}
 
 	for _, user := range usersInfo {
@@ -110,22 +111,24 @@ func (s *UserService) GetAllUsers() ([]model.User, error) {
 	return usersInfo, nil
 }
 
-func (s *UserService) GetUserLogin(userName, password string) (model.User, error) {
+func (s *UserService) GetUserLogin(userName, password string) (*model.User, error) {
+	var msgErr error
 	existUser, err := s.repo.GetUserByName(userName)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return *existUser, fmt.Errorf("username not found")
-		}
-		return *existUser, fmt.Errorf("error sql. err = %s", err.Error())
+		return nil, fmt.Errorf("error sql. err = %s", err.Error())
+	} else if existUser == nil {
+		err = fmt.Errorf("user with username '%s' not found [E001]", userName)
+		msgErr = utils.MessageError("Service::CreateNewUser", err)
+		return nil, msgErr
 	}
 
 	// Verifikasi apakah password cocok dengan hash
 	match := s.VerifyPassword(password, existUser.Password)
 	if !match {
-		return *existUser, fmt.Errorf("password not equal")
+		return nil, fmt.Errorf("password not equal")
 	}
 
-	return *existUser, nil
+	return existUser, nil
 }
 
 func (s *UserService) GetUserById(userId string) (*model.User, error) {

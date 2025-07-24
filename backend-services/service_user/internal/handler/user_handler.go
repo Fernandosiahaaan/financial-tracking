@@ -14,6 +14,7 @@ import (
 	"service-user/internal/validations"
 	"service-user/middlewares"
 	"service-user/utils"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -77,15 +78,15 @@ func (h *UserHandler) UserLogin(c *gin.Context) {
 		return
 	}
 
-	msgErr, err := validations.ValidationLogin(&userLogin)
-	if err != nil {
-		response.CreateResponseHttp(c, http.StatusBadRequest, response.ResponseHttp{IsError: true, Message: msgErr.Error(), MessageErr: err.Error()})
+	err, msgErr := validations.ValidationLogin(&userLogin)
+	if msgErr != nil {
+		response.CreateResponseHttp(c, http.StatusBadRequest, response.ResponseHttp{IsError: true, Message: err.Error(), MessageErr: msgErr.Error()})
 		return
 	}
 
-	user, err := h.service.GetUserLogin(userLogin.Username, userLogin.Password)
-	if err != nil {
-		response.CreateResponseHttp(c, http.StatusBadRequest, response.ResponseHttp{IsError: true, Message: err.Error()})
+	user, msgErr := h.service.GetUserLogin(userLogin.Username, userLogin.Password)
+	if msgErr != nil {
+		response.CreateResponseHttp(c, http.StatusBadRequest, response.ResponseHttp{IsError: true, Message: "Not found username login", MessageErr: msgErr.Error()})
 		return
 	}
 
@@ -95,10 +96,11 @@ func (h *UserHandler) UserLogin(c *gin.Context) {
 		return
 	}
 
-	h.redis.SaveUserInfo(user)
+	h.redis.SaveUserInfo(*user)
+
 	err = h.redis.SetLoginInfo(h.ctx, tokenString, model.LoginCacheData{Id: user.ID, Username: user.Username, Role: user.Role})
 	if err != nil {
-		response.CreateResponseHttp(c, http.StatusInternalServerError, response.ResponseHttp{IsError: true, Message: err.Error()})
+		response.CreateResponseHttp(c, http.StatusInternalServerError, response.ResponseHttp{IsError: true, Message: "Failed system to process login", MessageErr: err.Error()})
 		return
 	}
 
@@ -115,14 +117,13 @@ func (h *UserHandler) UserLogout(c *gin.Context) {
 
 	_, err := h.redis.GetLoginInfo(tokenStr.(string))
 	if err != nil {
-		var msgErr error = utils.MessageError("redis::GetLoginInfo", err)
-		response.CreateResponseHttp(c, http.StatusInternalServerError, response.ResponseHttp{IsError: true, Message: "failed get session user", MessageErr: msgErr.Error()})
+		response.CreateResponseHttp(c, http.StatusInternalServerError, response.ResponseHttp{IsError: true, Message: "failed get session user", MessageErr: err.Error()})
 		return
 	}
 
 	err = h.redis.DeleteLoginInfo(tokenStr.(string))
 	if err != nil {
-		response.CreateResponseHttp(c, http.StatusInternalServerError, response.ResponseHttp{IsError: true, Message: "Failed logout session"})
+		response.CreateResponseHttp(c, http.StatusInternalServerError, response.ResponseHttp{IsError: true, Message: "Failed logout session", MessageErr: err.Error()})
 		return
 	}
 
@@ -174,8 +175,7 @@ func (h *UserHandler) UserGetAll(c *gin.Context) {
 
 	loginInfo, err := h.redis.GetLoginInfo(tokenStr.(string))
 	if err != nil {
-		var msgErr error = utils.MessageError("redis::GetLoginInfo", err)
-		response.CreateResponseHttp(c, http.StatusInternalServerError, response.ResponseHttp{IsError: true, Message: "failed get session user", MessageErr: msgErr.Error()})
+		response.CreateResponseHttp(c, http.StatusInternalServerError, response.ResponseHttp{IsError: true, Message: "failed get session user", MessageErr: err.Error()})
 		return
 	}
 
@@ -186,7 +186,7 @@ func (h *UserHandler) UserGetAll(c *gin.Context) {
 
 	users, err := h.service.GetAllUsers()
 	if err != nil {
-		response.CreateResponseHttp(c, http.StatusInternalServerError, response.ResponseHttp{IsError: true, Message: fmt.Sprintf("Invalid get users. err = %s", err.Error())})
+		response.CreateResponseHttp(c, http.StatusInternalServerError, response.ResponseHttp{IsError: true, Message: "Invalid get users", MessageErr: err.Error()})
 		return
 	}
 
@@ -194,7 +194,8 @@ func (h *UserHandler) UserGetAll(c *gin.Context) {
 }
 
 func (h *UserHandler) UserUpdateByID(c *gin.Context) {
-	var userUpdateReq model.User
+	var userUpdateReq request.UpdateUserRequest
+	var msgErr error
 
 	tokenStr, flag := c.Get("jwtToken")
 	if !flag {
@@ -202,10 +203,15 @@ func (h *UserHandler) UserUpdateByID(c *gin.Context) {
 		return
 	}
 
+	if err := json.NewDecoder(c.Request.Body).Decode(&userUpdateReq); err != nil {
+		msgErr = utils.MessageError("controller::UserUpdateByID", fmt.Errorf("failed to decode body request, err = %s", err.Error()))
+		response.CreateResponseHttp(c, http.StatusBadRequest, response.ResponseHttp{IsError: true, Message: "failed parse body request", MessageErr: msgErr.Error()})
+		return
+	}
+
 	loginInfo, err := h.redis.GetLoginInfo(tokenStr.(string))
 	if err != nil {
-		var msgErr error = utils.MessageError("redis::GetLoginInfo", err)
-		response.CreateResponseHttp(c, http.StatusInternalServerError, response.ResponseHttp{IsError: true, Message: "failed get session user", MessageErr: msgErr.Error()})
+		response.CreateResponseHttp(c, http.StatusInternalServerError, response.ResponseHttp{IsError: true, Message: "failed get session user", MessageErr: err.Error()})
 		return
 	}
 
@@ -217,24 +223,28 @@ func (h *UserHandler) UserUpdateByID(c *gin.Context) {
 
 	user, err := h.service.GetUserById(userID)
 	if err != nil {
-		response.CreateResponseHttp(c, http.StatusInternalServerError, response.ResponseHttp{IsError: true, Message: fmt.Sprintf("Invalid username and password. err := %v", err)})
+		response.CreateResponseHttp(c, http.StatusInternalServerError, response.ResponseHttp{IsError: true, Message: "Invalid username and password", MessageErr: err.Error()})
 		return
 	} else if user == nil {
 		response.CreateResponseHttp(c, http.StatusInternalServerError, response.ResponseHttp{IsError: true, Message: "username not found"})
 		return
-	} else if (loginInfo.Role != "superadmin") && (userID != loginInfo.Id) {
+	} else if (loginInfo.Role != model.RoleSuperAdmin) && (userID != loginInfo.Id) {
 		response.CreateResponseHttp(c, http.StatusForbidden, response.ResponseHttp{IsError: true, Message: fmt.Sprintf("user %s with role %s doesn't have access update user %s info", loginInfo.Username, loginInfo.Role, user.Username)})
 		return
 	}
 
-	userUpdateReq.ID = user.ID
-	if err = json.NewDecoder(c.Request.Body).Decode(&userUpdateReq); err != nil {
-		response.CreateResponseHttp(c, http.StatusBadRequest, response.ResponseHttp{IsError: true, Message: fmt.Sprintf("failed to decode body request, err = %s", err.Error())})
-		return
-	}
-
 	var statusCode int = 200
-	bodyResp, err := h.service.UpdateUser(userUpdateReq)
+	var userUpdate model.User = model.User{
+		ID:          userID,
+		Username:    userUpdateReq.Username,
+		Password:    userUpdateReq.Password,
+		FullName:    userUpdateReq.FullName,
+		Email:       userUpdateReq.Email,
+		PhoneNumber: userUpdateReq.PhoneNumber,
+		Role:        userUpdateReq.Role,
+		UpdatedAt:   time.Now(),
+	}
+	bodyResp, err := h.service.UpdateUser(userUpdate)
 	if err != nil {
 		statusCode = http.StatusInternalServerError
 	}
