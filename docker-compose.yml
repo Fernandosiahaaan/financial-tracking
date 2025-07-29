@@ -1,4 +1,4 @@
-version: '3.8'
+# version: '3.8'
 
 services:
   ############################################
@@ -60,7 +60,7 @@ services:
 
   redis:
     image: redis
-    container_name: redis-test
+    container_name: redis
     platform: linux/amd64
     ports:
       - "6380:6379"
@@ -179,8 +179,8 @@ services:
     networks:
       - kong-net
     ports:
-      - "8009:8000"
-      - "8008:8001"
+      - "8012:8000"
+      - "8013:8001"
       - "8443:8443"
       - "8444:8444"
     environment:
@@ -212,6 +212,45 @@ services:
       NODE_ENV: production
     depends_on:
       - kong
+
+
+#################################################
+#               Service-User                    #
+#################################################
+  service-user:
+    image: service-user
+    container_name: service-user
+    build:
+      context: ./backend-services/service_user
+      dockerfile: Dockerfile
+    depends_on:
+      - redis
+      - postgres
+    ports:
+      - "8082:8082"
+    env_file:
+      - ./backend-services/service_user/.env
+    networks:
+      - default
+
+#################################################
+#              Service-Wallet                   #
+#################################################
+  service-wallet:
+    image: service-wallet
+    container_name: service-wallet
+    build:
+      context: ./backend-services/service_wallet
+      dockerfile: Dockerfile
+    depends_on:
+      - redis
+      - postgres
+    ports:
+      - "8083:8083"
+    env_file:
+      - ./backend-services/service_wallet/.env
+    networks:
+      - default
 
 
 #################################################

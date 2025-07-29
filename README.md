@@ -2,4 +2,7 @@
 this repo is a finacial tracking
 
 
-# Test
+# Local Build
+```
+docker-compose up -d
+```
