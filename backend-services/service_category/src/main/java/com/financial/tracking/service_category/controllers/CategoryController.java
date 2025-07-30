@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 
 
 @RestController
-@RequestMapping("/api/categories")
+@RequestMapping("/ctgr")
 public class CategoryController {
     
     @Autowired
