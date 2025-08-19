@@ -14,31 +14,32 @@ import com.tracking.financial.service_transaction.repository.TransactionReposito
 @Service
 public class TransactionServiceImpl implements TransactionService {
     @Autowired
-    private TransactionRepository repository;
+    private TransactionRepository transactionRepository;
 
     @Override
-    public BaseResponse<TransactionModels> create(TransactionRequest item) {
-        return BaseResponse.setResponse(false, null, null);
+    public BaseResponse create(TransactionRequest item) {
+        List<TransactionModels> datas = transactionRepository.findAll();
+        return BaseResponse.setResponse(true, "success", null, datas);
     }
 
     @Override
-    public BaseResponse<List<TransactionModels>> findAll() {
-        return BaseResponse.setResponse(false, null, null);
+    public BaseResponse findAll() {
+        return BaseResponse.setResponse(false, null, null, null);
     }
 
     @Override
-    public BaseResponse<TransactionModels> findById(Long id) {
-        return BaseResponse.setResponse(false, null, null);
+    public BaseResponse findById(Long id) {
+        return BaseResponse.setResponse(false, null, null, null);
     }
 
     @Override
-    public BaseResponse<TransactionModels> update(TransactionRequest item) {
-        return BaseResponse.setResponse(false, null, null);
+    public BaseResponse update(TransactionRequest item) {
+        return BaseResponse.setResponse(false, null, null, null);
     }
 
     @Override
-    public BaseResponse<Void> delete(Long id) {
-        return BaseResponse.setResponse(false, null, null);
+    public BaseResponse delete(Long id) {
+        return BaseResponse.setResponse(false, null, null, null);
     }
 
 }

@@ -1,19 +1,24 @@
 package com.tracking.financial.service_transaction.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
-public class BaseResponse<T> {
+public class BaseResponse {
     private boolean isSuccess;
     private String message;
     private String messageError;
-    private T data;
+    private Object data;
 
-    public static <T> BaseResponse<T> setResponse(boolean isSuccess, String message, String messageError) {
-        return new BaseResponse<>(isSuccess, message, messageError, null);
+    public BaseResponse(boolean isSuccess, String message, String messageError, Object data) {
+        this.isSuccess = isSuccess;
+        this.message = message;
+        this.messageError = messageError;
+        this.data = data;
+    }
+
+    public static BaseResponse setResponse(boolean isSuccess, String message, String messageError, Object data) {
+        return new BaseResponse(isSuccess, message, messageError, data);
     }
 }

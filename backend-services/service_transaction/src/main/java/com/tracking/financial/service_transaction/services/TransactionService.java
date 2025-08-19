@@ -10,9 +10,13 @@ import com.tracking.financial.service_transaction.dto.TransactionRequest;
 import com.tracking.financial.service_transaction.models.TransactionModels;
 
 public interface TransactionService {
-    BaseResponse<TransactionModels> create(TransactionRequest item);
-    BaseResponse<List<TransactionModels>> findAll();
-    BaseResponse<TransactionModels> findById(Long id);
-    BaseResponse<TransactionModels> update(TransactionRequest item);
-    BaseResponse<Void> delete(Long id);
+    BaseResponse create(TransactionRequest item);
+
+    BaseResponse findAll();
+
+    BaseResponse findById(Long id);
+
+    BaseResponse update(TransactionRequest item);
+
+    BaseResponse delete(Long id);
 }
