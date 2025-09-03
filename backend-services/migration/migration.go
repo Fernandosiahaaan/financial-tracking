@@ -40,16 +40,50 @@ func main() {
 		log.Fatalf("failed create migrate instance : %v", err)
 	}
 
-	// Action
-	versioningDB := os.Getenv("VERSIONING_DB")
-	vDb, _ := strconv.Atoi(versioningDB)
-	if err != nil {
-		log.Fatalf("failed convert 'VERSIONING_DB' to UINT : %s. Err : %v", versioningDB, err)
+	args := os.Args
+	if len(args) < 2 {
+		log.Fatal("Please provide a migration command: up | down | version <n>")
 	}
 
-	err = migrationing.Migrate(uint(vDb))
-	if err != nil && err != migrate.ErrNoChange {
-		log.Fatalf("Failed to run migrations: %v", err)
+	cmd := args[1]
+	switch cmd {
+	case "up":
+		fmt.Println("========= MIGRATE UP START =========")
+		err := migrationing.Up()
+		if err != nil && err != migrate.ErrNoChange {
+			log.Fatalf("Migration up failed: %v", err)
+		}
+		fmt.Println("========= MIGRATE UP SUCCESS =========")
+
+	case "down":
+		fmt.Println("========= MIGRATE DOWN START =========")
+		err := migrationing.Down()
+		if err != nil {
+			log.Fatalf("Migration down failed: %v", err)
+		}
+		fmt.Println("========= MIGRATE DOWN SUCCESS =========")
+
+	case "version":
+		if len(args) < 3 {
+			log.Fatal("Please provide a version number")
+		}
+
+		vDb, err := strconv.Atoi(args[2])
+		if err != nil {
+			log.Fatalf("Invalid version number: %v", err)
+		}
+
+		fmt.Printf("========= MIGRATE TO VERSION %d =========\n", vDb)
+		err = migrationing.Migrate(uint(vDb))
+		if err != nil && err != migrate.ErrNoChange {
+			log.Fatalf("Migration to version failed: %v", err)
+		}
+
+		fmt.Println("========= MIGRATE TO VERSION SUCCESS =========")
+
+	default:
+		log.Fatalf("Unknown command: %s. Use up, down, or version <n>", cmd)
 	}
+
 	fmt.Println("========= MIGRATE PROCESS SUCCESSFULLY =========")
 }
