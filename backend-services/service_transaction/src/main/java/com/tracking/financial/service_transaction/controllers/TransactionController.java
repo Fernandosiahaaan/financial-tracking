@@ -5,11 +5,13 @@ import org.springframework.boot.autoconfigure.pulsar.PulsarProperties.Transactio
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.databind.JsonSerializable.Base;
 import com.tracking.financial.service_transaction.dto.BaseResponse;
+import com.tracking.financial.service_transaction.dto.OnCreateRequest;
 import com.tracking.financial.service_transaction.dto.TransactionRequest;
 import com.tracking.financial.service_transaction.services.TransactionService;
 
@@ -24,33 +26,34 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PutMapping;
 
 @RestController
-@RequestMapping
+@RequestMapping("/trns")
 public class TransactionController {
 
     @Autowired
     private TransactionService transactionService;
 
-    @PostMapping("/transaction")
-    public ResponseEntity<BaseResponse> create(@Valid @RequestBody TransactionRequest request) {
+    @PostMapping
+    public ResponseEntity<BaseResponse> create(
+            @Validated(OnCreateRequest.class) @RequestBody TransactionRequest request) {
         return ResponseEntity.status(HttpStatus.OK).body(transactionService.create(request));
     }
 
-    @GetMapping("/transactions")
+    @GetMapping
     public ResponseEntity<BaseResponse> findAll() {
         return ResponseEntity.status(HttpStatus.OK).body(transactionService.findAll());
     }
 
-    @GetMapping("/transaction/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<BaseResponse> findByid(@Valid @PathVariable Long id) {
         return ResponseEntity.status(HttpStatus.OK).body(transactionService.findById(id));
     }
 
-    @PutMapping("/transaction")
+    @PutMapping
     public ResponseEntity<BaseResponse> update(@Valid @RequestBody TransactionRequest request) {
         return ResponseEntity.status(HttpStatus.OK).body(transactionService.update(request));
     }
 
-    @DeleteMapping("/transaction/{id}")
+    @DeleteMapping
     public ResponseEntity<BaseResponse> delete(@PathVariable Long id) {
         return ResponseEntity.status(HttpStatus.OK).body(transactionService.delete(id));
     }

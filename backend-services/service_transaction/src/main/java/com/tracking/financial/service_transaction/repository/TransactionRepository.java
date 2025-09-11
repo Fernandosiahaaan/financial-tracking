@@ -4,6 +4,7 @@ import org.springframework.stereotype.Repository;
 
 import com.tracking.financial.service_transaction.models.TransactionModels;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,5 +15,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface TransactionRepository extends JpaRepository<TransactionModels, Long> {
-
-} 
+    Optional<TransactionModels> findByName(String name);
+}

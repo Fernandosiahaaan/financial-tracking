@@ -1,11 +1,10 @@
 CREATE TABLE IF NOT EXISTS transaction (
     id SERIAL PRIMARY KEY NOT NULL,
     name VARCHAR(50) UNIQUE NOT NULL,
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    category_id UUID NOT NULL REFERENCES categories(id) ON DELETE SET NULL,
+    user_id UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    category_id UUID NOT NULL REFERENCES categories (id) ON DELETE SET NULL,
     amount DECIMAL NOT NULL,
     description TEXT,
-    transaction_date DATE NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -13,11 +12,10 @@ CREATE TABLE IF NOT EXISTS transaction (
 CREATE TABLE IF NOT EXISTS transaction_hist (
     id SERIAL PRIMARY KEY NOT NULL,
     name VARCHAR(50) UNIQUE NOT NULL,
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    category_id UUID NOT NULL REFERENCES categories(id) ON DELETE SET NULL,
+    user_id UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    category_id UUID NOT NULL REFERENCES categories (id) ON DELETE SET NULL,
     amount DECIMAL NOT NULL,
     description TEXT,
-    transaction_date DATE NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

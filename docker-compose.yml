@@ -113,6 +113,23 @@ services:
       - default
 
   #################################################
+  #           Service-Transaction                 #
+  #################################################
+  service-transaction:
+    image: service-transaction
+    container_name: service-transaction
+    build:
+      context: ./backend-services/service_transaction
+      dockerfile: Dockerfile
+    depends_on:
+      - redis
+      - postgres
+    ports:
+      - "8085:8085"
+    networks:
+      - default
+
+  #################################################
   #                     Nginx                     #
   #################################################
   nginx-gateway:
