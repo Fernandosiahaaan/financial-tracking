@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -33,6 +34,7 @@ public class CategoryModel {
     private String name;
 
     @Enumerated(EnumType.STRING)
+    @Column(columnDefinition = "transaction_type")
     private transactionType type;
 
     @CreationTimestamp

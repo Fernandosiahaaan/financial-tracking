@@ -2,11 +2,11 @@ package com.tracking.financial.service_transaction.services;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.tracking.financial.service_transaction.clients.ClientCategory;
 import com.tracking.financial.service_transaction.dto.BaseResponse;
 import com.tracking.financial.service_transaction.dto.TransactionRequest;
 import com.tracking.financial.service_transaction.exceptions.BadRequestException;
@@ -18,11 +18,17 @@ import com.tracking.financial.service_transaction.repository.TransactionReposito
 public class TransactionServiceImpl implements TransactionService {
     @Autowired
     private TransactionRepository transactionRepository;
+    @Autowired
+    private ClientCategory clientCategory;
 
     @Override
     public BaseResponse create(TransactionRequest item) {
         if (transactionRepository.findByName(item.getName()).isPresent()) {
             throw new BadRequestException("Transaction name '" + item.getName() + "' sudah tersedia");
+        }
+
+        if (!clientCategory.isExistCategoryById(item.getCategoryId().toString())) {
+            throw new BadRequestException("Category tidak dikenal'");
         }
 
         TransactionModels data = new TransactionModels();

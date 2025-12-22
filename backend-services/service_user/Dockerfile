@@ -1,7 +1,7 @@
 # ============================
 # Tahap Builder
 # ============================
-FROM golang:1.20.3 AS builder
+FROM golang:1.23.0 AS builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && \
     rm -rf /var/lib/apt/lists/*
@@ -28,5 +28,5 @@ WORKDIR /app
 
 COPY .env .env
 COPY --from=builder /app/build ./build
-
+EXPOSE 8082
 CMD ["./build/service-user-app"]

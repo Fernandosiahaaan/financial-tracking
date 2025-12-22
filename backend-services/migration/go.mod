@@ -1,6 +1,8 @@
 module migration
 
-go 1.20
+go 1.23.0
+
+toolchain go1.23.2
 
 require (
 	github.com/golang-migrate/migrate/v4 v4.18.3

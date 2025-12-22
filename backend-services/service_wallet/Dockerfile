@@ -28,5 +28,5 @@ WORKDIR /app
 
 COPY .env .env
 COPY --from=builder /app/build ./build
-
+EXPOSE 8083
 CMD ["./build/service-wallet-app"]
