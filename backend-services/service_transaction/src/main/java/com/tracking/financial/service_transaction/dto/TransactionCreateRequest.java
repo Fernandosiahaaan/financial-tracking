@@ -13,7 +13,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @AllArgsConstructor
 @Builder
 @Getter
-public class TransactionRequest {
+public class TransactionCreateRequest {
 
     @JsonProperty("id")
     private Long id;
