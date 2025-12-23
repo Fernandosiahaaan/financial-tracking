@@ -106,7 +106,11 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     public BaseResponse delete(Long id) {
-        return BaseResponse.setResponse(false, null, null, null);
+        TransactionModels existing = transactionRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Transaction id '" + id + "' tidak ditemukan"));
+        
+        transactionRepository.delete(existing);
+        return BaseResponse.setResponse(true, "Success", null, existing);
     }
 
 }

@@ -50,7 +50,7 @@ public class TransactionController {
         return ResponseEntity.status(HttpStatus.OK).body(transactionService.update(request));
     }
 
-    @DeleteMapping
+    @DeleteMapping("/{id}")
     public ResponseEntity<BaseResponse> delete(@PathVariable Long id) {
         return ResponseEntity.status(HttpStatus.OK).body(transactionService.delete(id));
     }
