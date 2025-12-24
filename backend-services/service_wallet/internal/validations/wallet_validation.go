@@ -17,7 +17,7 @@ func ValidationCreateWallet(params request.CreateWalletRequest) (errRedaksi, err
 		validation.Field(&params.UserId, validation.Required),
 	)
 	if err != nil {
-		return fmt.Errorf("Data 'ReqId', 'Name', 'Type', 'UserId' must fill."), fmt.Errorf("failed validation struct request kuota cabang. err : %v", err)
+		return fmt.Errorf("Data 'ReqId', 'Name', 'Type', 'UserId' must fill."), fmt.Errorf("failed validation struct. err : %v", err)
 	}
 
 	errRedaksi, errSystem = ValidateStrInt("Balance", "0", &params.Balance)
@@ -32,17 +32,18 @@ func ValidationUpdateWallet(params request.UpdateWalletRequest) (errRedaksi, err
 	err := validation.ValidateStruct(&params,
 		validation.Field(&params.ReqID, validation.Required),
 		validation.Field(&params.WalletID, validation.Required),
-		validation.Field(&params.Name, validation.Required),
-		validation.Field(&params.Type, validation.Required),
+		// validation.Field(&params.Name, validation.Required),
+		// validation.Field(&params.Type, validation.Required),
 	)
 	if err != nil {
-		return fmt.Errorf("Data 'ReqId', 'Name', 'Type', 'UserId' must fill."), fmt.Errorf("failed validation struct request kuota cabang. err : %v", err)
+		return fmt.Errorf("Data 'ReqId', 'WalletId' must fill."), fmt.Errorf("failed validation struct. err : %v", err)
 	}
 
 	errRedaksi, errSystem = ValidateStrInt("Balance", "0", &params.Balance)
 	if errRedaksi != nil || errSystem != nil {
 		return
 	}
+	fmt.Println("params = ", params)
 
 	return ValidateUUID("Wallet ID", params.WalletID)
 }
@@ -52,7 +53,7 @@ func ValidationGetListWallet(params request.GetListWalletRequest) (errRedaksi, e
 		validation.Field(&params.ReqID, validation.Required),
 	)
 	if err != nil {
-		return fmt.Errorf("Data 'ReqId' must fill."), fmt.Errorf("failed validation struct request kuota cabang. err : %v", err)
+		return fmt.Errorf("Data 'ReqId' must fill."), fmt.Errorf("failed validation struct. err : %v", err)
 	}
 
 	errRedaksi, errSystem = ValidateStrInt("PageItem", "", &params.PageItem)

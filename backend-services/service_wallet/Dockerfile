@@ -1,7 +1,7 @@
 # ============================
 # Tahap Builder
 # ============================
-FROM golang:1.20.3 AS builder
+FROM golang:1.23.0 AS builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && \
     rm -rf /var/lib/apt/lists/*

@@ -45,10 +45,11 @@ func (h *WalletHandler) CreateWallet(c *gin.Context) {
 
 	balance, _ := strconv.Atoi(req.Balance)
 	var wallet models.Wallet = models.Wallet{
-		Name:    req.Name,
-		Type:    req.Type,
-		Balance: int64(balance),
-		UserId:  req.UserId,
+		Name:        req.Name,
+		Type:        req.Type,
+		Balance:     int64(balance),
+		Description: req.Description,
+		UserId:      req.UserId,
 	}
 	respOut, err := h.service.CreateNewWallet(&wallet)
 	if err != nil {
@@ -104,9 +105,10 @@ func (h *WalletHandler) UpdateWalletByID(c *gin.Context) {
 
 	balance, _ := strconv.Atoi(req.Balance)
 	var wallet models.Wallet = models.Wallet{
-		Name:    req.Name,
-		Type:    req.Type,
-		Balance: int64(balance),
+		Name:        req.Name,
+		Type:        req.Type,
+		Balance:     int64(balance),
+		Description: req.Description,
 	}
 
 	respOut, err := h.service.UpdateWalletById(walletID, wallet)

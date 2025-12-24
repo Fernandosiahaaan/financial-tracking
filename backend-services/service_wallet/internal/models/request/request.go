@@ -5,19 +5,21 @@ import (
 )
 
 type CreateWalletRequest struct {
-	ReqID   string            `json:"req_id"`
-	UserId  string            `json:"user_id"`
-	Name    string            `json:"name"`
-	Type    models.WalletType `json:"type"`
-	Balance string            `json:"balance"`
+	ReqID       string            `json:"req_id"`
+	UserId      string            `json:"user_id"`
+	Name        string            `json:"name"`
+	Type        models.WalletType `json:"type"`
+	Balance     string            `json:"balance"`
+	Description string            `json:"description"`
 }
 
 type UpdateWalletRequest struct {
-	ReqID    string            `json:"req_id"`
-	WalletID string            `json:"wallet_id"`
-	Name     string            `json:"name"`
-	Type     models.WalletType `json:"type"`
-	Balance  string            `json:"balance"`
+	ReqID       string            `json:"req_id"`
+	WalletID    string            `json:"wallet_id"`
+	Name        string            `json:"name"`
+	Type        models.WalletType `json:"type"`
+	Balance     string            `json:"balance"`
+	Description string            `json:"description"`
 }
 
 type GetListWalletRequest struct {
@@ -26,4 +28,5 @@ type GetListWalletRequest struct {
 	PageItem    string `json:"page_item"`
 	FilterBy    string `json:"filter_by"`
 	FilterValue string `json:"filter_value"`
+	Description string `json:"description"`
 }

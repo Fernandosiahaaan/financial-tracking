@@ -51,7 +51,7 @@ func (s *WalletService) CreateNewWallet(wallet *models.Wallet) (resp *response.R
 	}
 	wallet.ID = walletId
 
-	return &response.ResponseHttp{IsError: false, Message: fmt.Sprintf("Success created wallet '%s'", wallet.ID), Data: wallet}, nil
+	return &response.ResponseHttp{IsError: false, Message: "Success", Data: wallet}, nil
 }
 
 func (s *WalletService) GetWalletById(id string) (resp *response.ResponseHttp, err error) {
@@ -65,7 +65,7 @@ func (s *WalletService) GetWalletById(id string) (resp *response.ResponseHttp, e
 		return &response.ResponseHttp{IsError: true, Message: fmt.Sprintf("failed get wallet with id '%s' [E002]", id), MessageErr: msgErr.Error()}, msgErr
 	}
 
-	return &response.ResponseHttp{IsError: false, Message: fmt.Sprintf("Success created wallet '%s'", id), Data: existWallet}, nil
+	return &response.ResponseHttp{IsError: false, Message: "Success", Data: existWallet}, nil
 }
 
 func (s *WalletService) UpdateWalletById(id string, walletUpdate models.Wallet) (resp *response.ResponseHttp, err error) {
@@ -73,7 +73,7 @@ func (s *WalletService) UpdateWalletById(id string, walletUpdate models.Wallet) 
 	var msgErr error = nil
 
 	// Check wallet if exist
-	_, err = s.repo.GetWalletById(id)
+	existingWallet, err := s.repo.GetWalletById(id)
 	if err != nil {
 		msgErr = utils.MessageError("Repository::GetWalletById", err)
 		return &response.ResponseHttp{IsError: true, Message: fmt.Sprintf("Unknown wallet with id '%s' [E001]", id), MessageErr: msgErr.Error()}, msgErr
@@ -82,13 +82,30 @@ func (s *WalletService) UpdateWalletById(id string, walletUpdate models.Wallet) 
 	// Update Wallet
 	walletUpdate.ID = id
 	walletUpdate.UpdatedAt = time.Now()
+
+	if len(walletUpdate.Name) <= 0 || (walletUpdate.Name == "") {
+		walletUpdate.Name = existingWallet.Name
+	}
+
+	if (len(walletUpdate.Type) <= 0) || (walletUpdate.Type == "") {
+		walletUpdate.Type = existingWallet.Type
+	}
+
+	if walletUpdate.Balance >= 0 {
+		walletUpdate.Balance = existingWallet.Balance
+	}
+
+	if (len(walletUpdate.Description) <= 0) || (walletUpdate.Description == "") {
+		walletUpdate.Description = existingWallet.Description
+	}
+
 	err = s.repo.UpdateWalletById(walletUpdate)
 	if err != nil {
 		msgErr = utils.MessageError("Repository::UpdateWalletById", err)
 		return &response.ResponseHttp{IsError: true, Message: fmt.Sprintf("Failed update wallet with id '%s' [E002]", walletUpdate.ID), MessageErr: msgErr.Error()}, msgErr
 	}
 
-	return &response.ResponseHttp{IsError: false, Message: fmt.Sprintf("Success update wallet with id '%s'", walletUpdate.ID)}, nil
+	return &response.ResponseHttp{IsError: false, Message: "Success"}, nil
 }
 
 func (s *WalletService) DeleteWalletById(id string) (resp *response.ResponseHttp, err error) {
@@ -109,7 +126,7 @@ func (s *WalletService) DeleteWalletById(id string) (resp *response.ResponseHttp
 		return &response.ResponseHttp{IsError: true, Message: fmt.Sprintf("Failed delete wallet with id '%s' [E002]", id), MessageErr: msgErr.Error()}, msgErr
 	}
 
-	return &response.ResponseHttp{IsError: false, Message: fmt.Sprintf("Success delete wallet with id '%s'", id)}, nil
+	return &response.ResponseHttp{IsError: false, Message: "Success"}, nil
 }
 
 func (s *WalletService) GetListWallets(params request.GetListWalletRequest) (resp *response.GetListWalletResponse, err error) {
@@ -134,7 +151,7 @@ func (s *WalletService) GetListWallets(params request.GetListWalletRequest) (res
 	}
 	offset := (pageNumber - 1) * pageSize
 
-	pages := int(math.Ceil(float64(total) / float64(pageSize)))
+	pages := int(math.Ceil(float64(total)/float64(pageSize))) + 1
 
 	startItem := offset + 1
 	endItem := offset + pageSize

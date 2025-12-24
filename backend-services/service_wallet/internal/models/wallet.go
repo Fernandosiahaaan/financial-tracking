@@ -3,13 +3,14 @@ package models
 import "time"
 
 type Wallet struct {
-	ID        string     `json:"id"`
-	UserId    string     `json:"user_id"`
-	Name      string     `json:"name"`
-	Type      WalletType `json:"type"`
-	Balance   int64      `json:"balance"`
-	CreatedAt time.Time  `json:"created_at"`
-	UpdatedAt time.Time  `json:"updated_at"`
+	ID          string     `json:"id"`
+	UserId      string     `json:"user_id"`
+	Name        string     `json:"name"`
+	Type        WalletType `json:"type"`
+	Balance     int64      `json:"balance"`
+	Description string     `json:"description"`
+	CreatedAt   time.Time  `json:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at"`
 }
 
 type WalletType string

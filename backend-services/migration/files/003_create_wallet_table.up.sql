@@ -6,6 +6,7 @@ CREATE TABLE wallets (
     name VARCHAR(100) NOT NULL,
     type wallet_type NOT NULL, -- contoh: 'cash', 'bank', 'ewallet'
     balance DECIMAL DEFAULT 0,
+    description VARCHAR(500),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -16,6 +17,7 @@ CREATE TABLE wallets_hist (
     name VARCHAR(100) NOT NULL,
     type wallet_type NOT NULL, -- contoh: 'cash', 'bank', 'ewallet'
     balance DECIMAL DEFAULT 0,
+    description VARCHAR(500),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
