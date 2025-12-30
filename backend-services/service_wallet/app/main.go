@@ -37,7 +37,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	walletStore, err := store.NewWalletStore(ctx)
+	err, walletStore := store.NewWalletStore(ctx)
 	if err != nil {
 		log.Fatal("failed init wallet store. err : ", err)
 	}
@@ -51,7 +51,7 @@ func main() {
 	fmt.Println("🔥 Init Wallet Service...")
 	defer walletService.Close()
 
-	walletHandler := handlers.NewUserHandler(ctx, *walletService)
+	err, walletHandler := handlers.NewUserHandler(ctx, *walletService)
 	if err != nil {
 		log.Fatal("failed init wallet handler. err : ", err)
 	}

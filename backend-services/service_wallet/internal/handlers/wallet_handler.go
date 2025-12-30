@@ -5,28 +5,39 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"service-wallet/infrastructure"
 	"service-wallet/internal/models"
 	"service-wallet/internal/models/request"
 	"service-wallet/internal/models/response"
 	"service-wallet/internal/services"
 	validation "service-wallet/internal/validations"
+	"service-wallet/utils"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 type WalletHandler struct {
-	ctx     context.Context
-	cancel  context.CancelFunc
-	service *services.WalletService
+	ctx      context.Context
+	cancel   context.CancelFunc
+	service  *services.WalletService
+	logStash *zap.Logger
 }
 
-func NewUserHandler(ctx context.Context, service services.WalletService) *WalletHandler {
+func NewUserHandler(ctx context.Context, service services.WalletService) (error, *WalletHandler) {
+	logElk, err := infrastructure.NewConnectionELK()
+	if err != nil {
+		errMsg := utils.MessageError("infrastructure::NewConnectionELK", err)
+		return errMsg, nil
+	}
+
 	handlerCtx, handlerCancel := context.WithCancel(ctx)
-	return &WalletHandler{
-		ctx:     handlerCtx,
-		cancel:  handlerCancel,
-		service: &service,
+	return nil, &WalletHandler{
+		ctx:      handlerCtx,
+		cancel:   handlerCancel,
+		service:  &service,
+		logStash: logElk,
 	}
 }
 
@@ -167,4 +178,5 @@ func (h *WalletHandler) GetListWallets(c *gin.Context) {
 
 func (h *WalletHandler) Close() {
 	h.cancel()
+	// h.logStash.Close()
 }

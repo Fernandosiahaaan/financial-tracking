@@ -20,26 +20,26 @@ type WalletStore struct {
 	cancel context.CancelFunc
 }
 
-func NewWalletStore(ctx context.Context) (*WalletStore, error) {
+func NewWalletStore(ctx context.Context) (error, *WalletStore) {
 	repoPostgree, err := infrastructure.NewConnectionPostgree(ctx)
 	if err != nil {
 		errMsg := utils.MessageError("infrastructure::NewConnectionPostgree", err)
-		return nil, errMsg
+		return errMsg, nil
 	}
 
 	cacheRedis, err := infrastructure.NewConnectionRedis(ctx)
 	if err != nil {
 		errMsg := utils.MessageError("infrastructure::NewConnectionRedis", err)
-		return nil, errMsg
+		return errMsg, nil
 	}
 
 	serviceCtx, serviceCancel := context.WithCancel(ctx)
-	return &WalletStore{
+	return nil, &WalletStore{
 		ctx:    serviceCtx,
 		cancel: serviceCancel,
 		dbPq:   *repoPostgree,
 		cache:  *cacheRedis,
-	}, nil
+	}
 }
 
 func (s *WalletStore) CreateNewWallet(wallet models.Wallet) (id string, err error) {

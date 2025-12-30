@@ -12,7 +12,10 @@ import (
 
 func routing(handler *handlers.WalletHandler) (*gin.Engine, error) {
 	rout := gin.New()
-	rout.Use(CustomRecovery())
+	rout.Use(
+		CustomRecovery(),
+		handler.LogRequest(),
+	)
 
 	// with no middleware
 	rout.GET("/ping", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"message": "pong"}) })
